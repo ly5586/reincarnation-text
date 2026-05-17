@@ -802,6 +802,41 @@ function newGame() {
   }
 }
 
+// ─── 测评模式 (Ctrl+点击"新游戏" 或 控制台 debugMaxAll()) ───
+function debugMaxAll() {
+  clearSave(); resetState();
+  S.level = 99; S.xp = 0; S.xpToNext = xpForLevel(99); S.gold = 99999;
+  S.maxConstitution = 100 + (S.level - 1) * 10;
+  S.maxSanity = 100 + (S.level - 1) * 10;
+  S.maxVigilance = 50 + (S.level - 1) * 5;
+  S.constitution = S.maxConstitution;
+  S.sanity = S.maxSanity;
+  S.vigilance = S.maxVigilance;
+  // 解锁全部角色
+  S.unlockedCharacters = Object.keys(CHARACTER_DB);
+  S.currentCharacter = 'baize';
+  // 填满全部道具
+  S.inventory = Object.keys(ITEM_DB);
+  S.maxInventorySlots = Object.keys(ITEM_DB).length;
+  // 解锁全部副本
+  S.completedDungeons = Object.keys(DUNGEON_DB).filter(id => !DUNGEON_DB[id].locked);
+  // 解锁被锁的副本
+  for (const [id, d] of Object.entries(DUNGEON_DB)) { if (d.locked) d.locked = false; }
+  saveGame();
+  renderHub();
+}
+window.debugMaxAll = debugMaxAll; // 控制台可直接调用
+
+// 给新游戏按钮加 Ctrl+Click 触发测评模式
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('hub-newgame-btn');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      if (e.ctrlKey) { e.preventDefault(); debugMaxAll(); }
+    });
+  }
+});
+
 // ─── 角色商店 ────────────────────────────
 function renderCharShop() {
   const activeEl = document.getElementById('hub-char-active');
