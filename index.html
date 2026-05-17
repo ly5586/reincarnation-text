@@ -284,6 +284,55 @@
 .hub-inv-slot .item-name { font-size: 10px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 #hub-newgame-btn { padding: 8px 16px; background: transparent; color: var(--text-dim); border: 1px solid #333; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
 #hub-newgame-btn:hover { border-color: var(--accent-bright); color: var(--accent-bright); }
+
+/* ─── Character Shop ─── */
+#hub-char-section { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+#hub-char-section h3 { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; letter-spacing: 2px; }
+#hub-char-active { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #1a1a1a; border: 1px solid var(--gold); border-radius: 6px; margin-bottom: 16px; }
+#hub-char-active .char-emoji { font-size: 36px; }
+#hub-char-active .char-info { flex: 1; }
+#hub-char-active .char-name { font-size: 15px; color: #fff; font-weight: bold; }
+#hub-char-active .char-bonus { font-size: 12px; color: var(--gold); margin-top: 2px; }
+#hub-char-active .char-desc { font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+#hub-char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.char-card { background: #1a1a1a; border: 1px solid var(--border); border-radius: 6px; padding: 14px; text-align: center; transition: all 0.2s; cursor: pointer; }
+.char-card:hover { border-color: var(--accent-bright); }
+.char-card.active { border-color: var(--gold); background: #1a1a0a; }
+.char-card.owned { border-color: #555; }
+.char-card .char-emoji { font-size: 32px; margin-bottom: 6px; }
+.char-card .char-name { font-size: 14px; color: #fff; font-weight: bold; }
+.char-card .char-tag { font-size: 11px; color: var(--text-dim); margin: 2px 0; }
+.char-card .char-bonus { font-size: 11px; color: var(--gold); }
+.char-card .char-cost { font-size: 12px; color: var(--gold); margin-top: 6px; }
+.char-card .char-cost.locked { color: var(--accent-bright); }
+.char-card .char-buy-btn { margin-top: 8px; padding: 5px 14px; background: var(--accent); color: #fff; border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 12px; }
+.char-card .char-buy-btn:hover { background: var(--accent-bright); }
+.char-card .char-select-btn { margin-top: 8px; padding: 5px 14px; background: transparent; color: var(--gold); border: 1px solid var(--gold); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 12px; }
+.char-card .char-select-btn:hover { background: var(--gold); color: #000; }
+
+/* ─── Save Slots ─── */
+#hub-save-section { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+#hub-save-section h3 { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; letter-spacing: 2px; }
+#hub-save-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.save-slot { background: #1a1a1a; border: 1px solid var(--border); border-radius: 6px; padding: 14px; text-align: center; }
+.save-slot.filled { border-color: #555; }
+.save-slot .slot-num { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+.save-slot .slot-info { font-size: 12px; color: #aaa; line-height: 1.6; }
+.save-slot .slot-info .name { font-size: 14px; color: #fff; display: block; }
+.save-slot .slot-time { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+.save-slot .slot-actions { margin-top: 8px; display: flex; gap: 6px; justify-content: center; }
+.save-slot .slot-btn { padding: 4px 10px; background: var(--surface); color: #aaa; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 11px; }
+.save-slot .slot-btn:hover { border-color: var(--accent-bright); color: #fff; }
+.save-slot .slot-btn.save { background: var(--accent); color: #fff; border: none; }
+.save-slot .slot-btn.save:hover { background: var(--accent-bright); }
+.save-slot .slot-btn.danger:hover { border-color: #c33; color: #c33; }
+#hub-save-auto { font-size: 11px; color: var(--text-dim); text-align: center; }
+#hub-save-auto span { color: var(--gold); }
+
+@media (max-width: 700px) {
+  #hub-char-grid { grid-template-columns: repeat(2, 1fr); }
+  #hub-save-slots { grid-template-columns: repeat(2, 1fr); }
+}
 #return-hub-bar { text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 #return-hub-btn { padding: 10px 28px; background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s; }
 #return-hub-btn:hover { border-color: var(--accent-bright); color: #fff; }
@@ -363,6 +412,20 @@
       <h3>背包（<span id="hub-inv-count">0</span>/<span id="hub-inv-max">10</span>）</h3>
       <div id="hub-inv-grid"></div>
     </div>
+
+    <!-- 角色系统 -->
+    <div id="hub-char-section">
+      <h3>角色</h3>
+      <div id="hub-char-active"></div>
+      <div id="hub-char-grid"></div>
+    </div>
+
+    <!-- 存档槽位 -->
+    <div id="hub-save-section">
+      <h3>存档</h3>
+      <div id="hub-save-slots"></div>
+      <div id="hub-save-auto">自动保存：<span id="hub-save-time">--</span></div>
+    </div>
   </div>
 
   <!-- ═══ 副本视图 ═══ -->
@@ -413,12 +476,60 @@ const DUNGEON_DB = {
   },
 };
 
+// ─── 角色数据库 ──────────────────────────
+const CHARACTER_DB = {
+  linwan: {
+    id:'linwan', name:'林婉', cost:0, unlocked:true,
+    tag:'默认角色', emoji:'👩‍🎨',
+    desc:'美术系大二女生，温柔而坚定。曾在镜中困了三年，如今选择与你同行。她的画笔能调和光芒——却也记得黑暗的模样。',
+    bonusDesc:'体质 +5%',
+    bonuses:{constitution:5},
+  },
+  mochen: {
+    id:'mochen', name:'墨尘', cost:300,
+    tag:'规则感知', emoji:'🌑',
+    desc:'沉默寡言的黑衣青年。他能"听见"规则的脉动——代价是再也无法入睡。当你犹豫不决时，他会在你耳边低语。',
+    bonusDesc:'理智 +10%',
+    bonuses:{sanity:10},
+  },
+  chiyan: {
+    id:'chiyan', name:'赤焰', cost:300,
+    tag:'生存专家', emoji:'🔥',
+    desc:'退伍侦察兵。在无限世界里已经闯过了十七个副本，身上每一道疤痕都是一条规则换来的。话少，但有用。',
+    bonusDesc:'体质 +15%',
+    bonuses:{constitution:15},
+  },
+  shuangyue: {
+    id:'shuangyue', name:'霜月', cost:500,
+    tag:'占卜师', emoji:'🌙',
+    desc:'银发紫瞳的神秘女子，随身带着一副从不离手的塔罗牌。她看不见未来——但能看见危险离你还有几步。',
+    bonusDesc:'警惕 +15%',
+    bonuses:{vigilance:15},
+  },
+  yeying: {
+    id:'yeying', name:'夜莺', cost:800,
+    tag:'情报贩子', emoji:'🕊️',
+    desc:'来路不明的信息商人。第一次见面，她就叫出了你的名字和你上上个副本的通关时间。是敌是友？连她自己都还没决定。',
+    bonusDesc:'全属性 +5%',
+    bonuses:{constitution:5, sanity:5, vigilance:5},
+  },
+  baize: {
+    id:'baize', name:'白泽', cost:1200,
+    tag:'古老血脉', emoji:'🐉',
+    desc:'据说他的家族世代守护着一扇"门"。他说你身上有钥匙的味道——虽然你自己闻不到。沉默时很温柔，开口时更温柔。',
+    bonusDesc:'体质+8% 理智+8%',
+    bonuses:{constitution:8, sanity:8},
+  },
+};
+
 // ─── 游戏状态 ──────────────────────────────
 const defaults = {
   // RPG 成长（跨副本持久化）
   level:1, xp:0, xpToNext:100, gold:0,
   maxInventorySlots:10, completedDungeons:[],
   maxConstitution:100, maxSanity:100, maxVigilance:50,
+  currentCharacter:'linwan', unlockedCharacters:['linwan'],
+  saveSlots:{}, // { '1':{level,gold,timestamp,character,...} }
 
   // 当前副本状态（每次进副本重置）
   constitution:100, sanity:100, vigilance:50,
@@ -481,9 +592,46 @@ function loadGame() {
 
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch(e) {} }
 
+function saveToSlot(slotNum) {
+  const slot = {};
+  for (const k of Object.keys(defaults)) slot[k] = S[k];
+  slot.timestamp = Date.now();
+  slot.slotName = `Lv.${S.level} · ${CHARACTER_DB[S.currentCharacter]?.name||'?'} · 💰${S.gold}`;
+  S.saveSlots = S.saveSlots || {};
+  S.saveSlots[slotNum] = slot;
+  saveGame();
+  return slot;
+}
+
+function loadFromSlot(slotNum) {
+  const slot = S.saveSlots && S.saveSlots[slotNum];
+  if (!slot) return false;
+  for (const k of Object.keys(defaults)) {
+    if (k === 'saveSlots') continue;
+    if (k in slot) S[k] = slot[k]; else S[k] = defaults[k];
+  }
+  if (slot.saveSlots) S.saveSlots = slot.saveSlots;
+  saveGame();
+  return true;
+}
+
+function deleteSlot(slotNum) {
+  if (S.saveSlots) { delete S.saveSlots[slotNum]; saveGame(); }
+}
+
+function getCharacterBonus() {
+  const char = CHARACTER_DB[S.currentCharacter];
+  return char ? char.bonuses : {};
+}
+
 function resetDungeonState() {
   S.day = 1; S.inventory = []; S.rulesKnown = 0; S.causeOfDeath = '';
   S.constitution = S.maxConstitution; S.sanity = S.maxSanity; S.vigilance = Math.floor(S.maxVigilance * 0.5);
+  // Apply character bonuses
+  const bonus = getCharacterBonus();
+  if (bonus.constitution) S.constitution = Math.floor(S.constitution * (1 + bonus.constitution / 100));
+  if (bonus.sanity)       S.sanity       = Math.floor(S.sanity       * (1 + bonus.sanity / 100));
+  if (bonus.vigilance)    S.vigilance    = Math.floor(S.vigilance    * (1 + bonus.vigilance / 100));
   for (const k of Object.keys(defaults)) { if (k.startsWith('flag_')) S[k] = false; }
 }
 
@@ -538,6 +686,9 @@ function renderHub() {
 
   renderHubInventory();
   renderHubDungeons();
+  renderCharShop();
+  renderSaveSlots();
+  showAutoSaveTime();
   saveGame();
 }
 
@@ -606,6 +757,116 @@ function newGame() {
   if (confirm('确定要开始新游戏吗？当前进度将被清除。')) {
     clearSave(); resetState(); renderHub();
   }
+}
+
+// ─── 角色商店 ────────────────────────────
+function renderCharShop() {
+  const activeEl = document.getElementById('hub-char-active');
+  const currentChar = CHARACTER_DB[S.currentCharacter] || CHARACTER_DB['linwan'];
+  const bonus = getCharacterBonus();
+  const bonusText = Object.entries(bonus).map(([k,v]) => {
+    const names = {constitution:'体质', sanity:'理智', vigilance:'警惕'};
+    return `${names[k]||k} +${v}%`;
+  }).join(' · ');
+
+  activeEl.innerHTML = `
+    <div class="char-emoji">${currentChar.emoji}</div>
+    <div class="char-info">
+      <div class="char-name">${currentChar.name} <span style="font-size:11px;color:var(--text-dim)">${currentChar.tag}</span></div>
+      <div class="char-bonus">${bonusText}</div>
+      <div class="char-desc">${currentChar.desc}</div>
+    </div>`;
+
+  const grid = document.getElementById('hub-char-grid');
+  grid.innerHTML = '';
+  for (const [id, ch] of Object.entries(CHARACTER_DB)) {
+    const owned = S.unlockedCharacters && S.unlockedCharacters.includes(id);
+    const isActive = S.currentCharacter === id;
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    if (isActive) card.classList.add('active');
+    if (owned) card.classList.add('owned');
+
+    card.innerHTML = `
+      <div class="char-emoji">${ch.emoji}</div>
+      <div class="char-name">${ch.name}</div>
+      <div class="char-tag">${ch.tag}</div>
+      <div class="char-bonus">${ch.bonusDesc}</div>`;
+
+    if (owned && !isActive) {
+      card.innerHTML += `<button class="char-select-btn">选择</button>`;
+      card.querySelector('.char-select-btn').onclick = (e) => {
+        e.stopPropagation();
+        S.currentCharacter = id;
+        saveGame();
+        renderHub();
+      };
+    } else if (!owned) {
+      card.innerHTML += `<div class="char-cost">💰 ${ch.cost}</div>`;
+      if (S.gold >= ch.cost) {
+        card.innerHTML += `<button class="char-buy-btn">购买</button>`;
+        card.querySelector('.char-buy-btn').onclick = (e) => {
+          e.stopPropagation();
+          if (S.gold >= ch.cost) {
+            S.gold -= ch.cost;
+            if (!S.unlockedCharacters) S.unlockedCharacters = ['linwan'];
+            S.unlockedCharacters.push(id);
+            S.currentCharacter = id;
+            saveGame();
+            renderHub();
+          }
+        };
+      } else {
+        card.innerHTML += `<button class="char-buy-btn" disabled style="opacity:0.3;cursor:not-allowed">金币不足</button>`;
+      }
+    }
+
+    grid.appendChild(card);
+  }
+}
+
+// ─── 存档槽位 ────────────────────────────
+function renderSaveSlots() {
+  const container = document.getElementById('hub-save-slots');
+  container.innerHTML = '';
+  for (let i = 1; i <= 3; i++) {
+    const slot = S.saveSlots && S.saveSlots[i];
+    const div = document.createElement('div');
+    div.className = 'save-slot' + (slot ? ' filled' : '');
+
+    if (slot) {
+      const d = new Date(slot.timestamp);
+      const timeStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      div.innerHTML = `
+        <div class="slot-num">存档 ${i}</div>
+        <div class="slot-info"><span class="name">${slot.slotName || '--'}</span></div>
+        <div class="slot-time">${timeStr}</div>
+        <div class="slot-actions">
+          <button class="slot-btn">读取</button>
+          <button class="slot-btn save">覆盖</button>
+          <button class="slot-btn danger">删除</button>
+        </div>`;
+      const btns = div.querySelectorAll('.slot-btn');
+      btns[0].onclick = () => { if (confirm('读取存档将覆盖当前进度，确定吗？')) { loadFromSlot(i); renderHub(); } };
+      btns[1].onclick = () => { saveToSlot(i); renderSaveSlots(); showAutoSaveTime(); };
+      btns[2].onclick = () => { if (confirm('确定删除此存档？')) { deleteSlot(i); renderSaveSlots(); } };
+    } else {
+      div.innerHTML = `
+        <div class="slot-num">存档 ${i}</div>
+        <div class="slot-info" style="color:var(--text-dim)">空</div>
+        <div class="slot-actions">
+          <button class="slot-btn save">保存</button>
+        </div>`;
+      div.querySelector('.slot-btn').onclick = () => { saveToSlot(i); renderSaveSlots(); showAutoSaveTime(); };
+    }
+    container.appendChild(div);
+  }
+}
+
+function showAutoSaveTime() {
+  const el = document.getElementById('hub-save-time');
+  const d = new Date();
+  el.textContent = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`;
 }
 
 // ─── 副本内容 ──────────────────────────────
