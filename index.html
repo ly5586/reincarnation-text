@@ -828,14 +828,14 @@ function debugMaxAll() {
 window.debugMaxAll = debugMaxAll; // 控制台可直接调用
 
 // 给新游戏按钮加 Ctrl+Click 触发测评模式
-document.addEventListener('DOMContentLoaded', () => {
+setTimeout(() => {
   const btn = document.getElementById('hub-newgame-btn');
   if (btn) {
     btn.addEventListener('click', (e) => {
       if (e.ctrlKey) { e.preventDefault(); debugMaxAll(); }
     });
   }
-});
+}, 100);
 
 // ─── 角色商店 ────────────────────────────
 function renderCharShop() {
