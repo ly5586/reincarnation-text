@@ -282,6 +282,8 @@
 .hub-inv-slot.rarity-epic { border-color: #9b59b6; }
 .hub-inv-slot .item-icon { font-size: 24px; margin-bottom: 2px; }
 .hub-inv-slot .item-name { font-size: 10px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+#hub-debug-btn { padding: 8px 14px; background: #2a1a0a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
+#hub-debug-btn:hover { background: var(--gold); color: #000; }
 #hub-newgame-btn { padding: 8px 16px; background: transparent; color: var(--text-dim); border: 1px solid #333; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
 #hub-newgame-btn:hover { border-color: var(--accent-bright); color: var(--accent-bright); }
 
@@ -388,6 +390,7 @@
       <div id="hub-player-info">
         <span id="hub-level">Lv.1</span>
         <span id="hub-gold">💰 0</span>
+        <button id="hub-debug-btn" title="测评模式：满级+全角色+全道具+无限金币">🔧 测评</button>
         <button id="hub-newgame-btn">新游戏</button>
       </div>
       <div id="hub-xp-section">
@@ -802,40 +805,22 @@ function newGame() {
   }
 }
 
-// ─── 测评模式 (Ctrl+点击"新游戏" 或 控制台 debugMaxAll()) ───
-function debugMaxAll() {
+// ─── 测评模式 ──────────────────────────
+window.debugMaxAll = function() {
   clearSave(); resetState();
   S.level = 99; S.xp = 0; S.xpToNext = xpForLevel(99); S.gold = 99999;
   S.maxConstitution = 100 + (S.level - 1) * 10;
   S.maxSanity = 100 + (S.level - 1) * 10;
   S.maxVigilance = 50 + (S.level - 1) * 5;
-  S.constitution = S.maxConstitution;
-  S.sanity = S.maxSanity;
-  S.vigilance = S.maxVigilance;
-  // 解锁全部角色
-  S.unlockedCharacters = Object.keys(CHARACTER_DB);
-  S.currentCharacter = 'baize';
-  // 填满全部道具
-  S.inventory = Object.keys(ITEM_DB);
-  S.maxInventorySlots = Object.keys(ITEM_DB).length;
-  // 解锁全部副本
-  S.completedDungeons = Object.keys(DUNGEON_DB).filter(id => !DUNGEON_DB[id].locked);
-  // 解锁被锁的副本
-  for (const [id, d] of Object.entries(DUNGEON_DB)) { if (d.locked) d.locked = false; }
+  S.constitution = S.maxConstitution; S.sanity = S.maxSanity; S.vigilance = S.maxVigilance;
+  S.unlockedCharacters = Object.keys(CHARACTER_DB); S.currentCharacter = 'baize';
+  S.inventory = Object.keys(ITEM_DB); S.maxInventorySlots = Object.keys(ITEM_DB).length;
+  S.completedDungeons = Object.keys(DUNGEON_DB).filter(function(id){return !DUNGEON_DB[id].locked;});
+  for (var _i=0, _keys=Object.keys(DUNGEON_DB); _i<_keys.length; _i++) { if (DUNGEON_DB[_keys[_i]].locked) DUNGEON_DB[_keys[_i]].locked = false; }
   saveGame();
   renderHub();
-}
-window.debugMaxAll = debugMaxAll; // 控制台可直接调用
-
-// 给新游戏按钮加 Ctrl+Click 触发测评模式
-setTimeout(() => {
-  const btn = document.getElementById('hub-newgame-btn');
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      if (e.ctrlKey) { e.preventDefault(); debugMaxAll(); }
-    });
-  }
-}, 100);
+  console.log('✅ 测评模式已激活 — Lv.99 全角色 全道具 无限金币');
+};
 
 // ─── 角色商店 ────────────────────────────
 function renderCharShop() {
@@ -2079,10 +2064,12 @@ function restart() {
 // ─── 启动 ────────────────────────────────
 function init() {
   document.documentElement.classList.add('game-loaded');
+  document.getElementById('hub-debug-btn').onclick = window.debugMaxAll;
   document.getElementById('hub-newgame-btn').onclick = newGame;
   document.getElementById('return-hub-btn').onclick = returnToHub;
   if (loadGame()) { renderHub(); }
   else { renderHub(); }
+  console.log('🎮 轮回文本 v2.1 已就绪 | debugMaxAll() 可测评 | 或点击 🔧 按钮');
 }
 init();
 </script>
