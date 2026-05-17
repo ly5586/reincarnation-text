@@ -2,7 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="轮回文本">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⌖</text></svg>">
 <title>轮回文本：影之枢纽 — 国产轮回系文字冒险游戏 | 免费在线游玩</title>
 <meta name="description" content="轮回文本：影之枢纽——一款国产黑暗风格轮回系文字冒险游戏。探索诡异宿舍407，在镜界回音中生存，收集隐藏规则，解开谜题。包含RPG成长要素、多结局、副本系统。支持中文，免费在线游玩。">
 <meta name="keywords" content="文字冒险游戏,轮回,恐怖游戏,中文独立游戏,诡异宿舍,文字解谜,无限流,交互小说,互动小说,在线游戏,免费游戏">
@@ -48,7 +53,24 @@
     font-size: 16px;
     line-height: 1.9;
     min-height: 100vh;
+    position: relative;
   }
+  /* CRT扫描线叠加层 */
+  body.crt-on::after {
+    content: '';
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 2px, transparent 2px, transparent 4px);
+    pointer-events: none; z-index: 9999;
+  }
+  /* 噪点叠加层 */
+  body.grain-on::before {
+    content: '';
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    background-repeat: repeat; pointer-events: none; z-index: 9998;
+  }
+  /* 性能优化：动画元素GPU加速 */
+  .flicker, .shake, .glitch-text { will-change: transform, opacity; }
   #app {
     display: flex;
     min-height: 100vh;
@@ -431,8 +453,9 @@
         <span id="hub-level">Lv.1</span>
         <span id="hub-gold">💰 0</span>
         <span id="hub-ach-count" style="color:var(--gold);font-size:12px;cursor:help" title="已解锁成就">🏆 0</span>
-        <button id="hub-debug-btn" title="测评模式：满级+全角色+全道具+无限金币">🔧 测评</button>
-        <button id="hub-font-btn" title="切换文本大小" style="padding:8px 12px;background:transparent;color:var(--text-dim);border:1px solid #333;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px">Aa</button>
+        <button id="hub-debug-btn" title="测评模式：满级+全角色+全道具+无限金币" aria-label="测评模式">🔧 测评</button>
+        <button id="hub-font-btn" title="切换文本大小" style="padding:8px 12px;background:transparent;color:var(--text-dim);border:1px solid #333;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px" aria-label="切换文本大小">Aa</button>
+        <button id="hub-crt-btn" title="切换CRT扫描线效果" style="padding:8px 12px;background:transparent;color:var(--text-dim);border:1px solid #333;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px" aria-label="切换CRT效果">📺</button>
         <button id="hub-newgame-btn">新游戏</button>
       </div>
       <div id="hub-xp-section">
@@ -520,7 +543,7 @@
       <div class="rules-section" id="void-pulse-section" style="display:none;color:var(--accent-bright)">归墟脉动：<span id="void-pulse-val">0</span></div>
     </div>
     <div id="main">
-      <div id="text"></div>
+      <div id="text" role="status" aria-live="polite" aria-atomic="true"></div>
       <div id="choices"></div>
       <div id="return-hub-bar" style="display:none;"><button id="return-hub-btn">返回枢纽</button></div>
     </div>
@@ -3049,20 +3072,36 @@ function init() {
 
   // 文本大小切换
   const fontSizes = ['text-sm', 'text-md', 'text-lg'];
-  let fontSizeIdx = 1; // 默认 text-md
+  let fontSizeIdx = 1;
   document.getElementById('hub-font-btn').onclick = function() {
     fontSizeIdx = (fontSizeIdx + 1) % fontSizes.length;
     document.body.classList.remove('text-sm', 'text-md', 'text-lg');
     document.body.classList.add(fontSizes[fontSizeIdx]);
     try { localStorage.setItem('reincarnation_text_fontSize', fontSizeIdx); } catch(e) {}
   };
-  // 恢复上次文本大小
   try {
     const savedSize = parseInt(localStorage.getItem('reincarnation_text_fontSize'));
     if (savedSize >= 0 && savedSize < fontSizes.length) {
       fontSizeIdx = savedSize;
       document.body.classList.remove('text-sm', 'text-md', 'text-lg');
       document.body.classList.add(fontSizes[fontSizeIdx]);
+    }
+  } catch(e) {}
+
+  // CRT/噪点特效切换
+  document.getElementById('hub-crt-btn').onclick = function() {
+    var body = document.body;
+    if (body.classList.contains('crt-on')) {
+      body.classList.remove('crt-on', 'grain-on');
+      try { localStorage.setItem('reincarnation_text_crt', '0'); } catch(e) {}
+    } else {
+      body.classList.add('crt-on', 'grain-on');
+      try { localStorage.setItem('reincarnation_text_crt', '1'); } catch(e) {}
+    }
+  };
+  try {
+    if (localStorage.getItem('reincarnation_text_crt') === '1') {
+      document.body.classList.add('crt-on', 'grain-on');
     }
   } catch(e) {}
 
