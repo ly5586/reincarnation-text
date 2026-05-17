@@ -1,0 +1,5 @@
+deployed.html
+game.js
+game_v*.js
+__pycache__/
+*.pyc
