@@ -218,25 +218,30 @@
   }
   #restart-btn:hover { background: var(--accent-bright); }
   @media (max-width: 700px) {
-    #app { flex-direction: column; }
+    #dungeon-view { flex-direction: column; }
     #sidebar {
       width: 100%; min-width: unset;
       flex-direction: row;
       flex-wrap: wrap;
-      gap: 6px 16px;
-      padding: 14px 16px;
-      font-size: 12px;
+      gap: 4px 10px;
+      padding: 10px 12px;
+      font-size: 11px;
       align-items: center;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
     }
-    #sidebar h2 { font-size:13px; margin:0; border:none; padding:0 12px 0 0; }
-    #sidebar .stat { gap:6px; }
-    #sidebar .stat-bar { width:40px; margin:0; }
+    #sidebar h2 { font-size:12px; margin:0; border:none; padding:0 8px 0 0; }
+    #sidebar .stat { gap:4px; font-size:10px; }
+    #sidebar .stat-value { font-size:11px; }
+    #sidebar .stat-bar { width:30px; height:4px; margin:0; }
     #sidebar .divider { display:none; }
     #sidebar .rules-section { display:none; }
-    #sidebar .inventory-list { font-size:11px; }
-    #main { padding:24px 20px; }
-    #text { font-size:15px; }
-    #choices button { font-size:14px; padding:12px 14px; }
+    #sidebar .inventory-list { font-size:10px; }
+    #sidebar .day-badge { font-size:10px; padding:1px 6px; }
+    #main { padding:16px 14px; flex:1; max-width:100%; }
+    #text { font-size:14px; line-height:1.7; }
+    #choices button { font-size:13px; padding:10px 12px; }
+    #return-hub-btn { font-size:12px; padding:8px 16px; }
   }
 
 /* ─────────── Hub View ─────────── */
@@ -617,6 +622,14 @@ function loadGame() {
   try {
     const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
     const data = JSON.parse(raw);
+
+    // 迁移旧版道具：中文名 → ID
+    if (data.inventory && Array.isArray(data.inventory)) {
+      const nameToId = {};
+      for (const [id, item] of Object.entries(ITEM_DB)) { nameToId[item.name] = id; }
+      data.inventory = data.inventory.map(function(x) { return nameToId[x] || x; });
+    }
+
     for (const k of Object.keys(defaults)) { if (k in data) S[k] = data[k]; else S[k] = defaults[k]; }
     return true;
   } catch(e) { return false; }
