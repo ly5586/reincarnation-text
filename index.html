@@ -512,15 +512,15 @@ const ICON_FALLBACK = '📦';
 const DUNGEON_DB = {
   strange_dorm: {
     id:'strange_dorm', name:'诡异宿舍 407', desc:'在镜子的另一边生存三天，收集规则，揭开林婉失踪的真相。',
-    minLevel:1, xpReward:100, goldReward:50, duration:'20-30分钟',
+    minLevel:1, xpReward:100, goldReward:50, duration:'20-30分钟', startPassage:'start',
   },
   mirror_echo: {
     id:'mirror_echo', name:'镜界回音', desc:'待开发——穿越镜面维度的心理惊悚之旅。',
-    minLevel:3, xpReward:200, goldReward:100, duration:'40-60分钟', locked:true,
+    minLevel:3, xpReward:200, goldReward:100, duration:'40-60分钟', locked:true, startPassage:'start',
   },
   void_abyss: {
     id:'void_abyss', name:'虚渊归墟', desc:'太一疯了，寂灭天在靠近。法则之弦崩裂，执弦者互相厮杀。身为源质者——你的选择将决定虚渊的命运。',
-    minLevel:5, xpReward:350, goldReward:200, duration:'30-50分钟',
+    minLevel:5, xpReward:350, goldReward:200, duration:'30-50分钟', startPassage:'void_start',
   },
 };
 
@@ -826,7 +826,8 @@ function enterDungeon(dungeonId) {
   document.getElementById('return-hub-bar').style.display = 'none';
   document.getElementById('sidebar').querySelector('h2').textContent =
     `⌖ ${DUNGEON_DB[dungeonId]?.name || '轮回文本'}`;
-  render('start');
+  const startId = DUNGEON_DB[dungeonId]?.startPassage || 'start';
+  render(startId);
 }
 
 function returnToHub() {
