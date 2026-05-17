@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>诡异宿舍 — 轮回文本 Demo</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --text: #c8c8c8;
+    --text-dim: #777;
+    --accent: #8b0000;
+    --accent-bright: #c0392b;
+    --gold: #a68b5b;
+    --border: #2a2a2a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+    font-size: 16px;
+    line-height: 1.9;
+    min-height: 100vh;
+  }
+  #app {
+    display: flex;
+    min-height: 100vh;
+  }
+  #sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+  }
+  #sidebar h2 {
+    font-size: 15px;
+    color: var(--accent-bright);
+    margin-bottom: 14px;
+    letter-spacing: 2px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+  }
+  #sidebar .stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+  }
+  #sidebar .stat-label {
+    color: var(--text-dim);
+  }
+  #sidebar .stat-value {
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    font-family: "Cascadia Code","Consolas",monospace;
+  }
+  #sidebar .stat-bar {
+    width: 100%;
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    margin: 2px 0 8px;
+    overflow: hidden;
+  }
+  #sidebar .stat-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease, background 0.5s ease;
+  }
+  #sidebar .divider {
+    border-top: 1px solid var(--border);
+    margin: 10px 0;
+  }
+  #sidebar .inventory-list {
+    font-size: 12px;
+    color: var(--gold);
+    line-height: 1.6;
+  }
+  #sidebar .day-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  #sidebar .rules-section {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  #sidebar .rules-section .known { color: var(--accent-bright); }
+  #main {
+    flex: 1;
+    padding: 40px 48px;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #text {
+    margin-bottom: 32px;
+    animation: fadeIn 0.6s ease;
+    white-space: pre-wrap;
+  }
+  #text.distorted {
+    filter: blur(0.6px);
+    color: #999;
+    transition: filter 1.5s ease, color 1.5s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes flicker {
+    0%,100% { opacity:1; }
+    50%     { opacity:0.3; }
+  }
+  .flicker { animation: flicker 0.15s ease 2; }
+  #choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #choices button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 14px 18px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    line-height: 1.6;
+  }
+  #choices button:hover {
+    background: #1e1e1e;
+    border-color: var(--accent-bright);
+    color: #fff;
+    padding-left: 24px;
+  }
+  #choices button:active {
+    background: #222;
+  }
+  .ending-title {
+    font-size: 24px;
+    color: var(--accent-bright);
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 4px;
+  }
+  .ending-title.good { color: var(--gold); }
+  .ending-title.true { color: #6b8cce; }
+  .death-recap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin: 18px 0;
+    font-size: 14px;
+    color: var(--accent-bright);
+    border-radius: 4px;
+  }
+  .death-recap span { color: var(--text-dim); }
+  .hint {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 8px;
+    font-style: italic;
+  }
+  #restart-btn {
+    display: block;
+    margin: 24px auto 0;
+    padding: 12px 32px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 2px;
+    transition: background 0.2s;
+  }
+  #restart-btn:hover { background: var(--accent-bright); }
+  @media (max-width: 700px) {
+    #app { flex-direction: column; }
+    #sidebar {
+      width: 100%; min-width: unset;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      padding: 14px 16px;
+      font-size: 12px;
+      align-items: center;
+    }
+    #sidebar h2 { font-size:13px; margin:0; border:none; padding:0 12px 0 0; }
+    #sidebar .stat { gap:6px; }
+    #sidebar .stat-bar { width:40px; margin:0; }
+    #sidebar .divider { display:none; }
+    #sidebar .rules-section { display:none; }
+    #sidebar .inventory-list { font-size:11px; }
+    #main { padding:24px 20px; }
+    #text { font-size:15px; }
+    #choices button { font-size:14px; padding:12px 14px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <h2>⌖ 轮回文本</h2>
+    <div class="stat"><span class="stat-label">体质</span><span class="stat-value" id="val-con">100</span></div>
+    <div class="stat-bar"><div class="stat-bar-fill" id="bar-con" style="width:100%;background:#4a9"></div></div>
+    <div class="stat"><span class="stat-label">理智</span><span class="stat-value" id="val-san">100</span></div>
+    <div class="stat-bar"><div class="stat-bar-fill" id="bar-san" style="width:100%;background:#69b"></div></div>
+    <div class="stat"><span class="stat-label">警惕</span><span class="stat-value" id="val-vig">50</span></div>
+    <div class="stat-bar"><div class="stat-bar-fill" id="bar-vig" style="width:50%;background:#a68b5b"></div></div>
+    <div class="divider"></div>
+    <div id="day-badge"></div>
+    <div style="font-size:12px;color:var(--text-dim)">道具</div>
+    <div class="inventory-list" id="inv-list">无</div>
+    <div class="rules-section">已知规则：<span id="rules-count">0</span>/5</div>
+  </div>
+  <div id="main">
+    <div id="text"></div>
+    <div id="choices"></div>
+  </div>
+</div>
+
+<script>
+// ─── 游戏状态 ──────────────────────────────
+const defaults = {
+  constitution: 100, sanity: 100, vigilance: 50,
+  day: 1,
+  inventory: [],
+  rulesKnown: 0,
+  causeOfDeath: '',
+  flag_heardRules: false,
+  flag_mirrorChecked: false,
+  flag_foundDiary: false,
+  flag_foundShard: false,
+  flag_sawWestWall: false,
+  flag_freedSpirit: false,
+  flag_answeredCall: false,
+  flag_bathroomSurvived: false,
+};
+
+let S = {};
+function resetState() { S = JSON.parse(JSON.stringify(defaults)); }
+resetState();
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function isDead() {
+  if (S.constitution <= 0) { S.causeOfDeath = '你的体质耗尽，身体彻底崩溃。'; return true; }
+  if (S.sanity <= 0) { S.causeOfDeath = '你的理智完全崩溃。你再也分不清什么是真实，什么是幻觉。'; return true; }
+  return false;
+}
+
+function apply(effects) {
+  if (!effects) return;
+  for (const [k, v] of Object.entries(effects)) {
+    if (k === 'inventory_add')       { S.inventory.push(v); }
+    else if (k === 'inventory_remove') { S.inventory = S.inventory.filter(x => x !== v); }
+    else if (k === 'flag')           { S[v] = true; }
+    else if (typeof S[k] === 'number') { S[k] += v; }
+    else                             { S[k] = v; }
+  }
+  S.constitution = clamp(S.constitution, 0, 100);
+  S.sanity       = clamp(S.sanity, 0, 100);
+  S.vigilance    = clamp(S.vigilance, 0, 100);
+}
+
+// ─── 副本内容 ──────────────────────────────
+const passages = {
+
+// ═══ 开场 ═══
+start: {
+  text: s => {
+    return `你从一片混沌中醒来。
+
+后脑勺隐隐作痛，像是被人从高处推落。
+
+眼前是陌生的天花板——斑驳的墙皮、发黄的水渍、一盏静止的吊扇。你躺在一张硬邦邦的铁架床上铺，空气里弥漫着霉味和廉价洗衣液的混合气息。
+
+这不是你的房间。
+
+手机屏幕突然亮起，在黑暗中刺眼得像一把刀。屏幕上只有一行冰冷的文字：
+
+<b>【副本：诡异宿舍 407】</b>
+<b>主线任务：存活三天，找到离开的线索。</b>
+<b>失败惩罚：抹杀。</b>
+
+你的心脏猛地收缩了一下。手机右上角显示时间：<b>23:41</b>。
+
+下铺传来翻身的声音。一个瘦削的男生探出头来，推了推黑框眼镜。他的脸色白得不像活人。
+
+"新来的？"他的声音很轻，像是怕被什么东西听见，"听我说——这间宿舍……不太对劲。"`;
+  },
+  choices: [
+    { text: "坐起来，仔细听他说", next: "day1_listen" },
+    { text: "下床，先去卫生间洗把脸清醒一下", next: "day1_mirror" },
+  ],
+},
+
+// ═══ 第一天：听室友讲规则 ═══
+day1_listen: {
+  text: s => {
+    let t = `你坐起身，示意他继续说。
+
+他叫小李，大三的。已经在这间宿舍住了两周。
+"你知道为什么 407 只住了我一个人吗？"他压低声音，"因为住进来的人……都待不过一周。"
+
+三年前，一个叫<b>林婉</b>的大二女生在 407 失踪。警方搜了整栋楼，什么都没找到。之后每一个住进这间宿舍的学生，都报告过"不对劲的事"——半夜听见有人哭、镜子里的倒影比本人慢半拍、早晨醒来发现自己在卫生间地板上。
+
+小李递给你一张皱巴巴的纸，上面用圆珠笔潦草地写着：
+
+<b>【407 生存规则·已知部分】</b>
+<b>规则一：午夜 12 点后，不可照任何镜子。</b>
+<b>规则二：门外有人叫你名字——不管声音多像你认识的人——不要应答，不要开门。</b>
+<b>规则三：凌晨 12 点至 3 点之间，卫生间门必须保持敞开。如果它自己关上了，立刻离开宿舍，天亮之前不要回来。</b>
+
+"另外两条……我没能确认，"小李咽了口唾沫，"但我听上一任住客提过——"
+
+他话说到一半，走廊尽头的灯突然灭了。`;
+    if (s.vigilance >= 60) t += `\n\n你敏锐地注意到，小李在说到"上一任住客"时，手指在微微发抖。这不是表演——是真实的恐惧。`;
+    t += `\n\n"我得走了，晚上还有选修课。"他抓起背包，"记住——规则是真的。每一条都是用人命试出来的。"
+
+他匆匆离开。宿舍门在他身后发出沉闷的响声。
+
+你低头看着手里的纸条。墙上的挂钟指向 <b>23:53</b>。`;
+    return t;
+  },
+  choices: [
+    { text: "把规则牢记在心，直接睡觉", next: "day1_sleep", effect: s => { s.flag_heardRules = true; s.rulesKnown = Math.max(s.rulesKnown, 3); s.vigilance += 5; } },
+    { text: "趁还不到12点，检查一下房间和卫生间", next: "day1_dorm_search", effect: s => { s.flag_heardRules = true; s.rulesKnown = Math.max(s.rulesKnown, 3); } },
+  ],
+},
+
+// ═══ 第一天：照镜子（危险选择）═══
+day1_mirror: {
+  text: s => {
+    S.flag_mirrorChecked = true;
+    S.rulesKnown = Math.max(S.rulesKnown, 1);
+    S.sanity -= 20;
+    let t = `你爬下床，光着脚踩在冰凉的瓷砖上。
+
+推开卫生间的门，日光灯"嗡嗡"闪了两下才亮起来。你走到洗手台前，拧开水龙头，往脸上泼了把冷水。
+
+然后你抬起头，看向镜子。
+
+镜子里的你……眼睛是闭着的。
+
+你的眼睛明明是睁着的。你能看见镜子、看见洗手台、看见自己那张惊慌失措的脸。
+
+但镜子里的你，双眼紧闭。
+
+你伸出手去碰镜面——镜中的你也伸出了手，但指尖触到玻璃之前，你看到镜中的自己嘴角微微上扬，做出了一个你绝对没有做的表情。
+
+<b>它在笑。</b>
+
+日光灯猛地炸裂。你在黑暗中跌跌撞撞地退出卫生间，后背上全是冷汗。
+
+墙上的钟指向 <b>23:58</b>。`;
+    if (isDead()) return t + `\n\n你的精神承受不住这一击。世界开始旋转、扭曲，最后坍缩成一个针尖大小的光点——然后彻底熄灭。`;
+    t += `\n\n你一只手撑着墙，大口喘气。你明白了一件事：规则是真的。`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0 || s.constitution <= 0) return [];
+    return [
+      { text: "回到床上，强迫自己冷静下来", next: "day1_sleep", effect: { vigilance: 5 } },
+    ];
+  },
+},
+
+// ═══ 第一天：搜索宿舍 ═══
+day1_dorm_search: {
+  text: s => {
+    let t = `趁还没到午夜，你快速检查了一遍宿舍。
+
+407 是一间标准的四人间，但目前只住了你和小李两张床。靠窗的两张铺位空着，床板上落了一层灰。
+
+你拉开书桌抽屉。`;
+    if (!S.inventory.includes('手电筒')) {
+      t += ` 第二层抽屉里有一支<b>老式铁皮手电筒</b>。你试了一下——还能亮，电池是满的。`;
+    }
+    t += `
+
+你注意到东墙上有一面穿衣镜，镜面灰蒙蒙的，像是很久没人擦过。镜框上刻着一行小字：<b>"林婉，2019级，美术系"</b>。
+
+卫生间的门开着。一切看起来都很正常。
+
+但直觉告诉你：等到午夜，这间宿舍会是另一个样子。
+
+挂钟指向 <b>23:55</b>。`;
+    return t;
+  },
+  choices: [
+    { text: "拿上手电筒，上床睡觉", next: "day1_sleep", effect: { inventory_add: '手电筒', vigilance: 5 } },
+    { text: "不碰任何东西，直接睡觉", next: "day1_sleep" },
+  ],
+},
+
+// ═══ 入睡 ═══
+day1_sleep: {
+  text: s => {
+    S.day = 2;
+    let t = `你躺回床上，用被子裹紧自己。
+
+钟声敲了十二下。每一响都像直接敲在你的颅骨上。
+
+你紧闭双眼，强迫自己不动。时间变得很慢。你听见卫生间的水龙头自己打开了——滴答、滴答——然后又自己关上了。
+
+下铺的小李没有回来。
+
+不知道什么时候，你终于在恐惧中睡了过去。
+
+……
+
+<b>第二天。</b>
+
+阳光透过窗帘缝隙照进来的时候，你几乎以为昨晚只是一场噩梦。`;
+    if (S.inventory.includes('手电筒')) {
+      t += ` 枕边的手电筒提醒你——一切真实不虚。`;
+    }
+    t += `
+
+手机屏幕又亮了：
+<b>【存活确认】剩余时间：2天。</b>
+<b>线索进度：0/3</b>
+
+走廊里传来其他学生的说话声。白天——也许白天是安全的。
+
+你该去哪里找线索？`;
+    return t;
+  },
+  choices: [
+    { text: "去食堂——那里人多，可以打听消息", next: "day2_canteen" },
+    { text: "去图书馆——查查旧档案和学生记录", next: "day2_library" },
+    { text: "留在宿舍，仔细搜索407的每一个角落", next: "day2_dorm_day" },
+  ],
+},
+
+// ═══ 第二天：食堂打听 ═══
+day2_canteen: {
+  text: s => {
+    let t = `食堂在宿舍楼东侧，是一栋独立的红砖建筑。
+
+你端着餐盘在一个角落坐下，竖起耳朵听周围人的谈话。
+
+两个女生坐在你隔壁桌，正低声议论着什么。
+
+"……407 又住人了。"
+"真的假的？不是封了一年了吗？"
+"据说学校不信邪，又开放申请了。赌五毛，不出三天又得换人。"
+"嘘——小声点。林婉那件事到现在都没说法，谁知道407里面到底有什么。"
+
+其中一个女生拿出手机翻了一张照片给同伴看。你假装路过，瞥了一眼——
+
+那是一个学生证。上面的照片……和你在东墙镜框上看到的那个名字一样。
+
+<b>林婉。</b>
+
+照片里的女生笑得很温柔，长发、圆脸、戴着一对珍珠耳钉。看起来完全不像会"失踪"的人。`;
+    if (s.vigilance >= 55) t += `\n\n你注意到照片右下角有一行模糊的日期戳——2018年9月。她是三年前入学的。`;
+    t += `\n\n你还需要更多信息。`;
+    return t;
+  },
+  choices: [
+    { text: "去图书馆继续调查林婉的资料", next: "day2_library", effect: { vigilance: 5 } },
+    { text: "回宿舍，准备应对第二天晚上", next: "day2_dorm_day", effect: { vigilance: 5 } },
+  ],
+},
+
+// ═══ 第二天：图书馆 ═══
+day2_library: {
+  text: s => {
+    S.flag_foundDiary = true;
+    S.rulesKnown = Math.max(S.rulesKnown, 4);
+    let t = `学校图书馆是一栋老楼，借阅区的尽头有一间落了灰的档案室。
+
+你用了一个多小时，在角落里翻出一本三年前的校刊合订本。2019年11月那一期的"读者来信"栏目里，有一篇匿名投稿：
+
+<i>「我不知道该不该写这个。407宿舍的事，学校封锁了所有消息。但我想让真相留下来。
+
+林婉失踪那晚，她室友说听到她在卫生间里和人说话。但407那天只有她一个人。
+
+警察在卫生间发现了一样东西——镜子碎了。每一片碎片上都沾了指纹，但指纹不属于林婉。
+
+更奇怪的是，镜框后面有一行用指甲刻上去的字：</i>
+
+<b><i>『窗户是假的，门是真的。403+4=？』</i></b>
+
+<i>这句话什么意思，没有人知道。但在此之后，住进407的人开始出事。
+
+有些规则，是后来的人用命一条一条试出来的。比如说——</i>
+
+<b><i>规则四：如果你半夜醒来发现自己动不了（鬼压床），不要挣扎，闭上眼睛，心里默数七下。数完之前不要睁眼。</i></b>
+
+稿子到这里就断了。最后一页被人撕掉了。
+
+<b>线索进度：1/3</b>
+
+天色已经不早了。走廊的阴影越来越长。`;
+    return t;
+  },
+  choices: [
+    { text: "记住线索，赶在天黑前回宿舍", next: "day2_dorm_day", effect: { vigilance: 10 } },
+    { text: "再翻一翻，找被撕掉的那一页", next: "day2_library_deep", effect: { vigilance: 5 } },
+  ],
+},
+
+// ═══ 第二天：图书馆深入 ═══
+day2_library_deep: {
+  text: s => {
+    S.vigilance += 10;
+    S.flag_foundDiary = true;
+    let t = `你在档案室翻找了近一个小时。
+
+天色越来越暗。档案室的日光灯管忽明忽暗，让整间屋子显得格外诡异。
+
+终于，在档案柜底层的夹缝里，你摸到了一个牛皮纸信封。
+
+信封里装的是林婉的学生档案——不是官方那份，而是一个心理辅导老师私下做的记录。
+
+<i>「林婉，2019年10月第三次咨询——她说宿舍里还有一个人。她看不见，但知道它在那里。它每天午夜出现，站在镜子前面，背对着林婉。
+
+"老师，它在等我回头。"
+
+我问她怎么知道。她说：因为镜子里能看到。
+
+——张老师」</i>
+
+最后一条记录日期是2019年11月4日。林婉失踪的前一天。
+
+信封背面，用铅笔潦草地写着几行小字——笔迹和之前看到的规则纸条一模一样：
+
+<b>规则五：407宿舍没有西墙。</b>
+<b>如果有一天你看到了西墙——说明你已经不在407了。</b>
+
+<b>线索进度：2/3</b>
+
+窗外，太阳已经沉到了地平线以下。`;
+    return t;
+  },
+  choices: [
+    { text: "带着所有资料，立刻返回宿舍", next: "day2_night", effect: { rulesKnown: 5 } },
+  ],
+},
+
+// ═══ 第二天：白天搜索宿舍 ═══
+day2_dorm_day: {
+  text: s => {
+    let t = `你决定在白天仔细搜查 407。
+
+阳光下的宿舍看起来很正常——甚至可以说有点温馨。窗外能看到操场上有学生在跑步。
+
+但这让你更加不安，因为你知道天一黑，一切都会改变。
+
+你在小李的床铺下找到了一个鞋盒，里面装着一些零碎的东西：`;
+    if (!S.flag_foundDiary && !S.inventory.includes('旧钥匙')) {
+      t += `\n- 半截蜡烛（闻起来有一股说不出的甜腻味）\n- 一把<b>旧钥匙</b>，标签上写着"11号"——不是407的钥匙`;
+    }
+    t += `\n- 几张撕下来的笔记本纸，上面写着同样的字：<b>"别回头看"</b>，重复了不下五十遍。`;
+
+    if (!S.flag_foundDiary) {
+      t += `\n\n你隐约觉得，那个"11号"钥匙很关键。403+4=7……不，应该是别的什么。`;
+    } else {
+      t += `\n\n你把图书馆找到的资料和眼前的线索拼在一起。403+4=407？不，那太直接了。403……西墙……11号钥匙……这些碎片之间有一种隐约的联系。`;
+    }
+
+    t += `\n\n时间不早了。走廊里的脚步声渐渐稀疏。夜晚即将来临。`;
+    return t;
+  },
+  choices: (s) => {
+    const c = [];
+    if (!S.inventory.includes('旧钥匙')) {
+      c.push({ text: "拿走旧钥匙，准备应对第二夜", next: "day2_night", effect: { inventory_add: '旧钥匙', vigilance: 5 }});
+    }
+    c.push({ text: "躺在床上休整，等待黑夜降临", next: "day2_night" });
+    return c;
+  },
+},
+
+// ═══ 第二夜 ═══
+day2_night: {
+  text: s => {
+    S.day = 3;
+    let t = `<b>23:48</b>。
+
+你回到宿舍。小李还是没有回来。
+
+你一个人坐在下铺，背靠着冰冷的墙壁。手电筒放在触手可及的地方。`;
+    if (S.inventory.includes('手电筒')) t += ` 光柱照在天花板上，形成了一个小小的安全圈。`;
+    t += `
+
+午夜十二点。
+
+钟声从走廊尽头传来。`;
+
+    if (!S.flag_heardRules) {
+      t += `\n\n你忽然意识到——你对规则一无所知。小李离开前没来得及告诉你任何事。你只能凭直觉活过这一夜。`;
+    }
+
+    t += `
+
+灯灭了。不只是宿舍的灯——走廊、窗外、整栋楼的灯光同时熄灭。
+
+彻底的黑暗。只有你的呼吸声和远处某种有节奏的"嗒、嗒"声。
+
+<b>然后，门外响起了脚步声。</b>
+
+不是一个人的脚步——是两个人。一个重、一个轻。它们在 407 门口停下了。
+
+一个声音从门外传来。它叫了你的名字。
+
+那声音……和小李一模一样。
+
+"开门啊，是我——我把选修课翘了。外面好冷，让我进来。"
+
+但你知道那不可能是小李。因为小李说的是"我有选修课"——可<b>晚上十点之后根本没有选修课</b>。`;
+    return t;
+  },
+  choices: [
+    { text: "保持沉默，遵守规则二", next: "day2_ignore" },
+    { text: "也许是小李真的回来了？去开门", next: "day2_answer" },
+    { text: "用手电筒照向门缝", next: "day2_peek", condition: s => s.inventory.includes('手电筒') },
+  ],
+},
+
+// ═══ 第二夜：应答 ═══
+day2_answer: {
+  text: s => {
+    S.flag_answeredCall = true;
+    S.sanity -= 30;
+    S.constitution -= 20;
+    let t = `你犹豫了一下，走向门口。
+
+"小李？是你吗？"
+
+门外的声音停顿了一秒。然后是咯咯的笑声。
+
+你透过猫眼往外看——走廊里空无一人。
+
+但笑声没有停止。它越来越大、越来越尖锐，像是十几个人的声音叠在一起。你捂住耳朵，但那声音穿透了你的手掌、你的颅骨、直接在你的脑子里炸开。
+
+门把手开始转动。一圈、两圈。
+
+你拼尽全力靠在门上。笑声持续了整整一分钟，然后——毫无预兆地——停了。
+
+寂静。
+
+你瘫坐在地上。浑身冷汗。`;
+
+    if (isDead()) {
+      return t + `\n\n那一分钟的尖笑摧毁了你。你的精神像一面被打碎的镜子——裂痕扩散到了无法修复的程度。`;
+    }
+
+    t += `\n\n过了许久，你才敢站起来。腿还是软的。但你活下来了。
+
+卫生间的门——不知道什么时候——关上了。`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0 || s.constitution <= 0) return [];
+    return [
+      { text: "去查看卫生间", next: "day2_bathroom" },
+      { text: "不管它，上床缩进被子里", next: "day3_morning", effect: { sanity: -5 } },
+    ];
+  },
+},
+
+// ═══ 第二夜：保持沉默 ═══
+day2_ignore: {
+  text: s => {
+    S.vigilance += 10;
+    let t = `你没有出声。
+
+门外的"小李"又叫了两次。第二次用了你母亲的声音。第三次——那声音变成了一种你从未听过的语言，低沉、粘腻，像是喉咙里含着水。
+
+你没有应答。
+
+"叩、叩、叩。"
+
+它敲了三下门。然后脚步声渐渐远去——但方向不对。脚步声不是走向走廊尽头，而是<b>向上走的</b>。
+
+<b>——像是走进了天花板里。</b>
+
+你长长地呼出一口气。手心里全是汗。
+
+但你还不能放松——卫生间的门，不知道什么时候<b>关上了</b>。
+
+规则三说：凌晨12-3点，卫生间门必须敞开。如果它自己关上了——跑。`;
+    return t;
+  },
+  choices: [
+    { text: "立刻离开宿舍", next: "day3_morning", effect: { vigilance: 5 } },
+    { text: "用手电筒照向卫生间", next: "day2_bathroom", condition: s => s.inventory.includes('手电筒') },
+    { text: "走过去，把门重新打开", next: "day2_bathroom" },
+  ],
+},
+
+// ═══ 第二夜：窥探 ═══
+day2_peek: {
+  text: s => {
+    S.sanity -= 15;
+    let t = `你打开手电筒，光柱透过门缝照向走廊。
+
+在光柱的边缘，你看到了不该看到的东西。
+
+一双脚。就站在门外。
+
+脚上没有穿鞋。脚趾甲是黑色的。光柱往上移——脚踝、小腿、膝盖——
+
+膝盖的地方<b>什么都没有了</b>。身体在膝盖处断开，像是被什么东西从中间撕裂。
+
+你猛地关上电筒。
+
+门外传来"嗒"的一声。然后是一阵像是湿布在地上拖行的声音。
+
+你趴在门上，大气不敢出。过了很久——可能是五分钟，可能是一个小时——声音终于消失。`;
+    if (isDead()) return t + `\n\n那幅画面烙在了你的视网膜上。你再也不敢闭上眼睛。`;
+    t += `\n\n你慢慢后退，撞到了卫生间的门框。
+
+门——是关着的。`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0 || s.constitution <= 0) return [];
+    return [
+      { text: "离开宿舍", next: "day3_morning", effect: { vigilance: 5 } },
+      { text: "进去查看", next: "day2_bathroom" },
+    ];
+  },
+},
+
+// ═══ 第二夜：卫生间 ═══
+day2_bathroom: {
+  text: s => {
+    S.flag_bathroomSurvived = true;
+    S.sanity -= 10;
+    let t = `你推向卫生间门。门无声地打开了。`;
+    if (S.inventory.includes('手电筒')) t += ` 手电筒的光柱扫进那片狭窄的空间。`;
+    t += `
+
+卫生间里……一切正常。洗手台、花洒、蹲坑。没有任何异常。
+
+但有什么地方<b>不对</b>。
+
+你花了几秒才意识到问题：洗手台上方的镜子——那块灰蒙蒙的穿衣镜——不在墙上。
+
+<b>它在地上。</b>
+
+镜面朝上，躺在瓷砖中间。镜子里倒映着天花板和日光灯，但没有倒映出你。
+
+你站在镜子正上方，但镜子里空无一人。`;
+
+    if (!S.flag_mirrorChecked) {
+      t += `
+
+你突然想起小李的话：<b>"午夜后不可照镜子。"</b>`;
+    }
+
+    t += `
+
+镜子角落里有一样东西在反光——<b>一块镜子碎片</b>，边缘锋利，被人用胶布包好了其中一侧。`;
+    if (S.flag_foundDiary) {
+      t += ` 你想起林婉失踪那晚，警察发现的碎镜子上全是陌生指纹。`;
+    }
+    t += `
+
+你小心翼翼地捡起碎片。触感冰凉。
+
+一缕黑色的头发从镜子背面伸出来，在你的手指上轻轻绕了一圈——然后缩回去了。
+
+卫生间的门<b>自己打开了</b>——是向外推的，像是有人要从里面出来。
+
+你必须做出选择。`;
+    return t;
+  },
+  choices: [
+    { text: "拿起镜子碎片，退出卫生间", next: "day3_morning", effect: { inventory_add: '镜子碎片', vigilance: 10, flag: 'flag_foundShard' } },
+    { text: "放下碎片，立刻退出卫生间", next: "day3_morning", effect: { vigilance: 5 } },
+    { text: "把地上的镜子翻过来，看看背面是什么", next: "day2_mirror_flip" },
+  ],
+},
+
+// ═══ 第二夜：翻转镜子 ═══
+day2_mirror_flip: {
+  text: s => {
+    S.sanity -= 25;
+    S.vigilance += 5;
+    S.flag_foundShard = true;
+    let t = `你深吸一口气，蹲下来，把手伸向地上的镜子。
+
+手指触到镜框的一瞬间——冰冷。不是金属的冷，是那种深入骨髓的、像是触碰到不属于这个世界的东西的冷。
+
+你咬紧牙，把镜子翻了过来。
+
+<b>镜子背面贴着无数张照片。</b>
+
+每一张照片都是407宿舍。不同的时间、不同的角度。有一些照片里能看到人——认识的不认识的——都在睡觉。有一张照片里是你，躺在你现在的上铺，睁着眼睛，直直地盯着镜头。
+
+但你从来没有在那张上铺上睁着眼睛拍过照。
+
+最中间的照片最大，是一张合照。上面有三个人：小李、一个你不认识的男生，还有——林婉。
+
+三个人都在笑。但林婉的眼睛被挖掉了，照片上有两个焦黑的洞。
+
+照片背面写着：<b>"4+0+7=11。它在11号等你。"</b>
+
+你的手开始剧烈地发抖。不是因为你害怕——是因为卫生间的温度在几秒之内下降到了冰点。
+
+地上的镜子"啪"地一声裂了一道缝。
+
+<b>快走。</b>`;
+    if (isDead()) return t + `\n\n你没能走出那个卫生间。`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0 || s.constitution <= 0) return [];
+    return [
+      { text: "抓起一块镜子碎片，逃出卫生间", next: "day3_morning", effect: { inventory_add: '镜子碎片' } },
+    ];
+  },
+},
+
+// ═══ 第三天：最后一天 ═══
+day3_morning: {
+  text: s => {
+    S.day = 3;
+    let t = `<b>第三天。</b>
+
+阳光再次照进407的时候，你觉得那光线像是某种恩赐。
+
+你在天亮前从卫生间逃出来了。天知道你是怎么熬到天亮的。
+
+手机上弹出新信息：
+
+<b>【存活确认】剩余时间：1天。</b>
+<b>线索进度：${S.flag_foundDiary ? '2' : '1'}/3</b>
+
+今天是你最后的机会。`;
+
+    if (S.flag_foundShard) {
+      t += `\n\n你握着手里的镜子碎片。在阳光下，它看起来就是一块普通的碎玻璃。但你能感觉到它与众不同——冰凉的触感即使在正午也没有消退。`;
+    }
+
+    if (S.inventory.includes('旧钥匙')) {
+      t += `\n\n旧钥匙的标签上写着"11号"。这栋楼有11号房间吗？`;
+    }
+
+    if (S.flag_foundDiary) {
+      t += `\n\n你把所有线索在脑子里拼了一遍：\n- 林婉在卫生间失踪\n- 镜子碎了，碎片上有陌生指纹\n- 403+4=？（被撕掉的那一页）\n- 规则五：407没有西墙`;
+    }
+
+    t += `\n\n今晚就是最后一夜了。你必须找到离开的方法。`;
+
+    const passed = s.flag_bathroomSurvived || s.flag_answeredCall;
+    if (passed) {
+      t += ` 昨晚的经历让你知道——蛮干是活不过第三夜的。你需要一个计划。`;
+    }
+
+    return t;
+  },
+  choices: (s) => {
+    const c = [];
+    if (S.inventory.includes('旧钥匙') || S.flag_foundDiary) {
+      c.push({ text: "去走廊尽头找11号房间", next: "day3_search_room11" });
+    }
+    c.push({ text: "重新检查407的墙壁——特别是西侧", next: "day3_west_wall" });
+    c.push({ text: "去图书馆查最后一条线索", next: "day3_library", condition: s => !S.flag_foundDiary });
+    c.push({ text: "在宿舍里等待天黑", next: "day3_night" });
+    return c;
+  },
+},
+
+// ═══ 第三天：找11号房间 ═══
+day3_search_room11: {
+  text: s => {
+    S.vigilance += 10;
+    let t = `你握着那把旧钥匙，沿着走廊一间一间地找。
+
+401、402、403……409、410。
+
+<b>411 不存在。</b>
+
+走廊尽头是410。再往前是一面墙。
+
+但你手里的钥匙上清清楚楚写着"11号"。
+
+你站在走廊尽头的墙前面仔细检查。`;
+    if (S.vigilance >= 65) {
+      t += `\n\n你敏锐地注意到——墙壁的下方有一条几乎不可见的细缝，像是一道隐形门的边缘。墙面上的墙纸纹理在这里对不上——有人精心掩盖了一道门。`;
+    } else {
+      t += `\n\n你摸了摸墙面。总感觉有什么地方不太对——墙砖之间的缝隙似乎比别处更宽。但你看不出什么名堂。`;
+    }
+
+    if (S.flag_foundDiary || S.rulesKnown >= 4) {
+      t += `\n\n你忽然想到：<b>403+4=407</b>——但反过来呢？把4补到403上，得到的是4034？不……是<b>西墙</b>。403和407之间隔着三面墙。如果在407西墙之后，还有一个不存在的房间——那才是"11号"。
+
+4+0+7=11。</b>`;
+    }
+
+    t += `\n\n线索逐渐清晰。但天快黑了。今晚——最后的机会。`;
+    return t;
+  },
+  choices: [
+    { text: "回407，今晚在宿舍寻找西墙", next: "day3_west_wall", effect: { flag: 'flag_sawWestWall' } },
+  ],
+},
+
+// ═══ 第三天：西墙 ═══
+day3_west_wall: {
+  text: s => {
+    S.flag_sawWestWall = true;
+    S.rulesKnown = Math.max(S.rulesKnown, 5);
+    S.vigilance += 10;
+    let t = `你回到407，站在房间的西侧。
+
+那面墙上挂着一副廉价的风景画——一片金色的麦田，构图俗套、画框廉价，是你之前完全忽略的东西。
+
+你伸手取下画。
+
+画后面——<b>不是一堵墙。</b>
+
+是一面镜子。和东墙上那面一模一样。
+
+但镜子里映出的不是407。而是另一间房间——一间你没有见过的宿舍。四张床铺都有人——四个女生围坐在一张桌子旁边，背对着镜子。她们穿着老式的校服，桌上的搪瓷杯冒着热气。
+
+其中一个女生转过头来看了一眼。她有一张圆脸，戴着珍珠耳钉。
+
+<b>林婉。</b>
+
+她对着镜子的方向——对着你——做了个"嘘"的手势。
+
+镜子左上角浮现出一行字：
+
+<b>『午夜十二点。西墙开门。钥匙在镜中。』</b>
+
+你后退一步。`;
+    if (S.inventory.includes('镜子碎片')) {
+      t += `\n\n你口袋里的镜子碎片开始发烫。`;
+    }
+    t += `
+
+规则五说：407没有西墙。但你现在看到了西墙——在画的后面。
+
+<b>你已经不在原来的407了。</b>或者说——你从一开始就不在。
+
+天色暗了。最后一夜即将来临。你有两个选择。`;
+    return t;
+  },
+  choices: [
+    { text: "等待午夜，穿越西墙", next: "day3_night_final", condition: s => s.inventory.includes('镜子碎片') },
+    { text: "等待午夜，穿越西墙（没有碎片也要试）", next: "day3_night_final" },
+  ],
+},
+
+// ═══ 第三天：图书馆补充 ═══
+day3_library: {
+  text: s => {
+    let t = `你再次来到图书馆。这是最后的机会了。
+
+档案室和你上次离开时一模一样——落灰的架子、昏黄的灯光、空气中纸张腐朽的味道。
+
+你找到了校刊合订本中被撕掉的那一页的残片——它被夹在了另一本书里。
+
+残片上只剩下半句话：
+
+<b>"……所以答案很简单：4+0+7=11。407没有西墙不是因为设计如此，而是因为西墙之后还有一间房间。那间房间的编号是——"</b>
+
+下半句被撕掉了。但你已经不需要了。
+
+<b>11号。西墙之后是11号房间。</b>
+
+你要做的就是——在午夜时分，找到进入西墙之后的方法。
+
+天黑了。最后的机会。`;
+    return t;
+  },
+  choices: [
+    { text: "返回407，面对最后一夜", next: "day3_west_wall" },
+  ],
+},
+
+// ═══ 第三夜：最终抉择 ═══
+day3_night: {
+  text: s => {
+    let t = `<b>最后一夜。</b>
+
+你把所有收集到的东西摆在面前。`;
+    if (S.inventory.length > 0) {
+      t += `\n${S.inventory.map(x => `- ${x}`).join('\n')}`;
+    } else {
+      t += `\n你没有什么可依靠的——只有自己。`;
+    }
+    t += `
+
+午夜将至。你已经知道了一些规则，但够用吗？
+
+宿舍的灯开始闪烁。墙上的挂钟秒针正在走向12点。
+
+你必须做出选择——最后一夜，怎么过？`;
+    return t;
+  },
+  choices: [
+    { text: "按照线索，在西墙等待开门", next: "day3_west_wall", condition: s => S.flag_foundDiary || S.inventory.includes('旧钥匙') },
+    { text: "用镜子碎片直面那个东西", next: "day3_night_final", condition: s => S.inventory.includes('镜子碎片') },
+    { text: "躲在被子里，什么也不做——熬到天亮", next: "day3_hide" },
+  ],
+},
+
+// ═══ 第三夜：最终 ═══
+day3_night_final: {
+  text: s => {
+    let t = `<b>午夜十二点。</b>
+
+钟声响起。`;
+
+    if (S.inventory.includes('镜子碎片')) {
+      t += `
+西墙的镜子开始发光——不是反射的光线，而是镜子自己在发光。光线是冷的，银白色，像月光透过水面。
+
+你口袋里的镜子碎片烫得让你几乎握不住。你把它拿出来——碎片自动飞向了西墙上的镜子，像铁屑遇到磁铁。
+
+碎片嵌入镜面的一瞬间，整面镜子剧烈震动起来。
+
+然后——<b>镜子碎了。</b>
+
+不是碎裂，而是像水一样融化，露出了背后的通道。`;
+
+      if (S.flag_foundDiary && S.rulesKnown >= 5) {
+        t += `
+
+通道那头，你看到了林婉。
+
+她站在一间落满灰尘的房间里——那就是11号，被封印在407西墙之后的秘密房间。她的形象并不恐怖——就是一个穿着旧校服的女生，表情平静，甚至带着一点释然。
+
+"谢谢你找到我，"她说，声音很轻，"钥匙不在我这里。在你手里——你每一次遵守规则、每一次活下来，都是在锻造这把钥匙。"
+
+她指了指你身后。你回头看到——407的东墙和西墙上各有一面镜子。东镜映出的是正常的世界。西镜映出的是通道。
+
+"我走不了。但你可以。"
+`;
+        if (S.rulesKnown >= 5 && S.flag_foundDiary && S.sanity >= 50) {
+          // 隐藏结局条件满足
+          t += `
+你犹豫了一下。然后向林婉伸出手。
+
+她惊讶地看着你。"你……"
+
+"一起走。"你说。
+
+她的眼眶红了。三年了，从来没有人对她说过这句话。
+
+林婉把手放在你的手掌上——她的手很凉，但能碰到。真实存在。
+
+镜子碎片重新凝聚，形成了一道完整的拱门。你和林婉一起穿了过去。
+
+身后，407的灯光彻底熄灭了。`;
+          S.flag_freedSpirit = true;
+          return t;
+        }
+      }
+
+      t += `\n\n你迈步走进通道。身后407的灯光在一点一点熄灭。`;
+    } else {
+      t += `
+你两手空空地面对西墙的镜子。
+
+午夜的钟声敲到第七下的时候，镜子表面出现了裂纹。裂缝越来越多、越来越密——然后——
+
+<b>砰。</b>
+
+镜子炸开了。但不是向外炸——而是向内坍缩，像一个漩涡把周围的一切吸了进去。
+
+你没有镜子碎片来稳定这个通道。你跌了进去——不知道会落到哪里。`;
+    }
+
+    return t;
+  },
+  choices: (s) => {
+    if (S.flag_freedSpirit) {
+      return [{ text: "……", next: "hidden_end" }];
+    }
+    if (S.inventory.includes('镜子碎片')) {
+      return [{ text: "走进通道", next: "good_end" }];
+    }
+    return [{ text: "跌入未知", next: "bad_end" }];
+  },
+},
+
+// ═══ 第三夜：躲藏 ═══
+day3_hide: {
+  text: s => {
+    S.sanity -= 40;
+    S.constitution -= 30;
+    let t = `你爬回上铺，用被子把自己从头到脚裹住。
+
+闭上眼睛。按规则四说的——如果在黑暗中不能动，就闭眼数到七。
+
+一、二、三、四、五、六、七。
+
+你数完了。但你还是动不了。
+
+被子外面有东西在走动。脚步声绕着你的床——一圈、两圈、三圈。
+
+然后停了下来。
+
+你感觉到一只手——冰冷的手——隔着被子，轻轻地按在了你的额头上。
+
+"找、到、你、了。"`;
+    if (isDead()) return t + `\n\n最后一句话。之后——黑暗。`;
+    t += `\n\n不知道过了多久，你睁开眼睛。天亮了——但你不知道自己是怎么撑过来的。`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0 || s.constitution <= 0) return [];
+    return [
+      { text: "……活下来了？", next: "good_end" },
+    ];
+  },
+},
+
+// ═══ 好结局 ═══
+good_end: {
+  text: s => {
+    let t = `<div class="ending-title good">⌖ 离 开 ⌖</div>
+
+你穿过西墙的通道，跌入一片炫目的白光之中。
+
+白光消退后，你发现自己站在一片空白的空间里。脚下没有地板、头顶没有天花板——但你能站在这里。
+
+一个没有感情的声音在你耳边响起：
+
+<b>【副本"诡异宿舍407"——通关】</b>
+<b>存活天数：3/3</b>
+<b>发现规则：${S.rulesKnown}/5</b>
+<b>线索收集：${S.flag_foundDiary ? '2' : '1'}/3</b>
+<b>结局：逃离</b>
+
+<b>结算奖励：</b>
+- 基础通关积分：100
+- 规则发现加成：+${S.rulesKnown * 20}
+- 幸存加成：+50`;
+
+    if (S.flag_freedSpirit) {
+      t += `\n- 隐藏任务"解救林婉"完成：+200`;
+    }
+
+    t += `
+
+你活下来了。
+
+你转过身。白光中浮现出一扇门——门牌上写着：
+
+<b>【枢纽】</b>
+
+你没有回头。407的门在你身后缓缓关上，连同那些镜子、规则、和死在黑暗里的另一个自己。
+
+前方——还有无数个副本在等着你。
+
+<b>但至少，这一次你赢了。</b>
+
+<i>——【诡异宿舍】完 ——</i>
+
+<div class="hint">（下一副本预告：《镜界回音》）</div>`;
+    return t;
+  },
+  choices: [
+    { text: "进入枢纽", next: "hub_teaser" },
+  ],
+},
+
+// ═══ 隐藏结局 ═══
+hidden_end: {
+  text: s => {
+    return `<div class="ending-title true">⌖ 真实结局：未竟之约 ⌖</div>
+
+白光吞没了一切。
+
+你们穿过通道。林婉的手在你的掌心里逐渐变得温暖——不再是那具困在镜子里的冰冷残影，而是一个活人的温度。
+
+白光消退后，你们站在一片一望无际的草地上。天空是淡紫色的。远处有一座小镇。
+
+林婉松开了你的手。她的眼睛——终于不再是镜子里那双紧闭的眼——是明亮的、湿润的。
+
+"三年了。原来外面的世界还在。"
+
+她看着你。
+
+"你不用救我。副本规则里没有这一条——救了NPC是要扣分的。"
+
+你这才注意到——那个冰冷的主神提示音并没有响起。
+
+"还愣着干嘛？"林婉笑了一下——她笑起来和那张学生证上一模一样，温柔、年轻——<b>一个21岁女生该有的样子</b>。
+
+"走吧。你不是还有别的副本要打吗？"
+
+天空的尽头，一扇写着【枢纽】的门缓缓浮现。
+
+<b>你多了一个队友。</b>
+
+<i>——【诡异宿舍】隐藏结局 ——</i>
+
+<div class="hint">解锁：林婉（潜在队友）| 额外积分 +200 | 隐藏成就"镜中人"</div>`;
+  },
+  choices: [
+    { text: "和林婉一起走进枢纽", next: "hub_teaser" },
+  ],
+},
+
+// ═══ 坏结局 ═══
+bad_end: {
+  text: s => {
+    let t = `<div class="ending-title">⌖ 副本失败 ⌖</div>
+
+<div class="death-recap">
+<b>死因：</b>${s.causeOfDeath || '未知'}
+<span>
+已知规则：${s.rulesKnown}/5 条
+存活天数：${s.day}/3 天
+</span>
+</div>
+
+黑暗从四面八方向你涌来。那个没有感情的声音最后一次响起：
+
+<b>【副本"诡异宿舍407"——失败】</b>
+<b>惩罚：抹杀。</b>
+
+但在意识彻底消失之前，你隐约听到了一个女生的声音——很轻、很远——像是在镜子另一边对你说话：
+
+"……没关系。下一个你会记住的。";
+
+    if (S.rulesKnown < 3) {
+      t += `\n\n<div class="hint">提示：你知晓的规则太少。想办法从小李或图书馆那里获取更多规则——在这个副本里，知识比勇气更重要。</div>`;
+    } else if (!S.flag_foundShard && S.day >= 3) {
+      t += `\n\n<div class="hint">提示：你需要一个"锚"来穿越西墙。看看卫生间的地上——那块镜子碎片可能还在那里。</div>`;
+    } else if (!S.flag_foundDiary) {
+      t += `\n\n<div class="hint">提示：图书馆里有关于407历史的记录。了解林婉的过去，是找到出路的关键。</div>`;
+    }
+
+    t += `\n\n<i>—— 轮回不灭，再来一次 ——</i>`;
+    return t;
+  },
+  choices: [],
+},
+
+// ═══ 枢纽预告 ═══
+hub_teaser: {
+  text: s => {
+    let t = `你踏入了枢纽。
+
+这是一个无限延伸的白色空间。悬浮在半空的平台上，有零星几个身影在走动——其他玩家。没有人说话。每个人脸上都带着刚从噩梦中醒来的表情。
+
+一块巨大的全息面板浮现在你面前：
+
+<b>【轮回文本：影之枢纽】v0.1</b>
+<b>通关副本：1</b>
+<b>当前积分：${100 + S.rulesKnown * 20 + 50 + (S.flag_freedSpirit ? 200 : 0)}</b>
+<b>已解锁：枢纽大厅 | 属性面板 | 道具仓库</b>
+
+面板右下角跳动着几个字：
+
+<b>下一个副本：《镜界回音》</b>
+<b>推荐等级：Lv.2（心理/信任机制）</b>
+<b>预计时长：40-60分钟</b>
+
+林婉站在你身边。`;
+    if (S.flag_freedSpirit) {
+      t += `"下一个副本……我也去。毕竟你欠我一个人情。"她眨了眨眼。`;
+    }
+    t += `
+
+平台边缘亮起一条发光的路径，通向远处一扇门。门上写着：<b>镜界回音</b>。
+
+<i>—— Demo 完 ——</i>
+
+<div class="hint">
+感谢试玩！这是《轮回文本》的 MVP Demo。
+想继续开发？从这里开始：
+- 添加更多副本（《镜界回音》《废土信条》）
+- 完善属性面板和跨副本继承
+- 加入道具商店和技能系统
+- 导入 Twine SugarCube 进行可视化编辑
+</div>`;
+    return t;
+  },
+  choices: [
+    { text: "重新开始", next: "start" },
+  ],
+},
+
+}; // 副本内容结束
+
+// ═══ 引擎 ═══
+function updateStats() {
+  document.getElementById('val-con').textContent = S.constitution;
+  document.getElementById('val-san').textContent = S.sanity;
+  document.getElementById('val-vig').textContent = S.vigilance;
+  document.getElementById('bar-con').style.width = S.constitution + '%';
+  document.getElementById('bar-san').style.width = S.sanity + '%';
+  document.getElementById('bar-vig').style.width = S.vigilance + '%';
+  // 颜色变化
+  const conBar = document.getElementById('bar-con');
+  const sanBar = document.getElementById('bar-san');
+  conBar.style.background = S.constitution > 40 ? '#4a9' : S.constitution > 20 ? '#ca0' : '#c33';
+  sanBar.style.background = S.sanity > 40 ? '#69b' : S.sanity > 20 ? '#c90' : '#c33';
+  // 天数
+  const dayBadge = document.getElementById('day-badge');
+  dayBadge.innerHTML = S.day <= 3 ? `<span class="day-badge">第 ${S.day} 天</span>` : '';
+  // 道具
+  document.getElementById('inv-list').textContent = S.inventory.length ? S.inventory.join(' | ') : '无';
+  // 规则
+  document.getElementById('rules-count').textContent = S.rulesKnown;
+}
+
+function render(id) {
+  const p = passages[id];
+  if (!p) { console.error('Passage not found:', id); return; }
+
+  const textEl = document.getElementById('text');
+  const choicesEl = document.getElementById('choices');
+
+  // 文本
+  const raw = typeof p.text === 'function' ? p.text(S) : p.text;
+  textEl.innerHTML = raw;
+  textEl.className = S.sanity < 35 ? 'distorted' : '';
+
+  // 选项
+  choicesEl.innerHTML = '';
+  const choices = typeof p.choices === 'function' ? p.choices(S) : (p.choices || []);
+
+  if (choices.length === 0 && id !== 'bad_end') {
+    // 判断是否为结局页
+    const isEnding = id.includes('end') || id.includes('hub');
+    if (isEnding) {
+      const btn = document.createElement('button');
+      btn.id = 'restart-btn';
+      btn.textContent = '重新开始';
+      btn.onclick = restart;
+      choicesEl.appendChild(btn);
+    }
+  }
+
+  choices.forEach((c, i) => {
+    if (c.condition && !c.condition(S)) return;
+    const btn = document.createElement('button');
+    btn.textContent = typeof c.text === 'function' ? c.text(S) : c.text;
+    btn.onclick = () => {
+      // 效果
+      if (c.effect) {
+        if (typeof c.effect === 'function') {
+          c.effect(S);
+        } else {
+          apply(c.effect);
+        }
+      }
+      S.constitution = clamp(S.constitution, 0, 100);
+      S.sanity       = clamp(S.sanity, 0, 100);
+      S.vigilance    = clamp(S.vigilance, 0, 100);
+
+      if (isDead()) {
+        render('bad_end');
+      } else {
+        render(c.next);
+      }
+    };
+    choicesEl.appendChild(btn);
+  });
+
+  // 死胡同——显示重新开始
+  if (choicesEl.children.length === 0 && !document.getElementById('restart-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'restart-btn';
+    btn.textContent = '重新开始';
+    btn.onclick = restart;
+    choicesEl.appendChild(btn);
+  }
+
+  updateStats();
+  document.getElementById('main').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function restart() {
+  resetState();
+  document.getElementById('text').className = '';
+  render('start');
+}
+
+// 起跑
+restart();
+</script>
+</body>
+</html>
