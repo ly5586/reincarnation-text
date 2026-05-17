@@ -3,7 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>诡异宿舍 — 轮回文本 Demo</title>
+<title>轮回文本：影之枢纽 — 国产轮回系文字冒险游戏 | 免费在线游玩</title>
+<meta name="description" content="轮回文本：影之枢纽——一款国产黑暗风格轮回系文字冒险游戏。探索诡异宿舍407，在镜界回音中生存，收集隐藏规则，解开谜题。包含RPG成长要素、多结局、副本系统。支持中文，免费在线游玩。">
+<meta name="keywords" content="文字冒险游戏,轮回,恐怖游戏,中文独立游戏,诡异宿舍,文字解谜,无限流,交互小说,互动小说,在线游戏,免费游戏">
+<meta property="og:title" content="轮回文本：影之枢纽">
+<meta property="og:type" content="website">
+<meta property="og:description" content="一款黑暗风格的轮回系文字冒险游戏。进入副本，收集规则，活到天亮。">
+<meta property="og:locale" content="zh_CN">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "轮回文本：影之枢纽",
+  "description": "一款基于浏览器的轮回系文字冒险游戏。玩家扮演被困在诡异宿舍407中的角色，通过收集规则、探索环境、做出选择来生存并揭开背后的真相。包含RPG成长要素、多结局和副本系统。",
+  "inLanguage": "zh-CN",
+  "applicationCategory": "Game",
+  "operatingSystem": "All",
+  "genre": ["Adventure", "Horror", "Text-based", "RPG"],
+  "numberOfPlayers": "1",
+  "author": { "@type": "Person", "name": "轮回文本开发组" }
+}
+</script>
 <style>
   :root {
     --bg: #0d0d0d;
@@ -218,46 +238,198 @@
     #text { font-size:15px; }
     #choices button { font-size:14px; padding:12px 14px; }
   }
+
+/* ─────────── Hub View ─────────── */
+#hub-view { display: none; padding: 32px 40px; max-width: 960px; margin: 0 auto; }
+#hub-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+#hub-header h1 { font-size: 22px; color: var(--accent-bright); letter-spacing: 4px; margin: 0; }
+#hub-player-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+#hub-level { color: var(--gold); font-weight: bold; font-family: monospace; }
+#hub-gold { color: var(--gold); font-size: 16px; font-weight: bold; }
+#hub-xp-section { width: 100%; margin-top: 8px; }
+#hub-xp-bar-outer { width: 100%; height: 10px; background: #1a1a1a; border-radius: 5px; overflow: hidden; }
+#hub-xp-bar-inner { height: 100%; background: linear-gradient(90deg, #a68b5b, #d4af37); border-radius: 5px; transition: width 0.5s ease; }
+#hub-xp-text { font-size: 11px; color: var(--text-dim); margin-top: 2px; display: flex; justify-content: space-between; }
+#hub-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+#hub-stats { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+#hub-stats h3 { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; letter-spacing: 2px; text-transform: uppercase; }
+.hub-stat { margin-bottom: 12px; }
+.hub-stat .stat-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+.hub-stat .stat-row .label { color: var(--text-dim); }
+.hub-stat .stat-row .value { font-weight: bold; font-family: monospace; }
+.hub-stat .stat-bar { width: 100%; height: 8px; background: #1a1a1a; border-radius: 4px; overflow: hidden; }
+.hub-stat .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+#hub-dungeons { display: flex; flex-direction: column; gap: 12px; }
+.dungeon-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border-color 0.2s; }
+.dungeon-card:hover { border-color: var(--accent-bright); }
+.dungeon-card.cleared { border-color: var(--gold); }
+.dungeon-card .info { flex: 1; }
+.dungeon-card .name { font-size: 16px; color: #fff; font-weight: bold; }
+.dungeon-card .meta { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.dungeon-card .status { font-size: 12px; padding: 3px 10px; border-radius: 3px; white-space: nowrap; }
+.dungeon-card .status.cleared { background: #1a3a1a; color: #4a9; }
+.dungeon-card .status.locked { background: #1a1a1a; color: var(--text-dim); }
+.dungeon-card .status.available { background: #2a1a0a; color: var(--gold); }
+.dungeon-card .enter-btn { padding: 8px 20px; background: var(--accent); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 14px; transition: background 0.2s; white-space: nowrap; }
+.dungeon-card .enter-btn:hover { background: var(--accent-bright); }
+.dungeon-card .enter-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#hub-inventory { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+#hub-inventory h3 { font-size: 14px; color: var(--text-dim); margin: 0 0 12px; letter-spacing: 2px; }
+#hub-inv-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.hub-inv-slot { aspect-ratio: 1; background: #1a1a1a; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--text-dim); text-align: center; padding: 4px; transition: all 0.2s; cursor: default; }
+.hub-inv-slot.filled { border-color: #555; color: #aaa; }
+.hub-inv-slot.rarity-rare { border-color: #6b8cce; }
+.hub-inv-slot.rarity-epic { border-color: #9b59b6; }
+.hub-inv-slot .item-icon { font-size: 24px; margin-bottom: 2px; }
+.hub-inv-slot .item-name { font-size: 10px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+#hub-newgame-btn { padding: 8px 16px; background: transparent; color: var(--text-dim); border: 1px solid #333; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
+#hub-newgame-btn:hover { border-color: var(--accent-bright); color: var(--accent-bright); }
+#return-hub-bar { text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+#return-hub-btn { padding: 10px 28px; background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s; }
+#return-hub-btn:hover { border-color: var(--accent-bright); color: #fff; }
+#dungeon-view { display: flex; width: 100%; }
+.seo-landing { max-width: 720px; margin: 40px auto; padding: 24px; line-height: 1.8; color: #c8c8c8; }
+.seo-landing h1 { font-size: 24px; color: #c0392b; margin-bottom: 16px; }
+.seo-landing h2 { font-size: 18px; color: #a68b5b; margin: 20px 0 10px; }
+.seo-landing p, .seo-landing li { font-size: 15px; margin-bottom: 8px; }
+.seo-landing ul { padding-left: 20px; }
+.game-loaded .seo-landing { display: none; }
+
+@media (max-width: 700px) {
+  #hub-body { grid-template-columns: 1fr; }
+  #hub-inv-grid { grid-template-columns: repeat(4, 1fr); }
+  #hub-view { padding: 16px; }
+  #hub-header h1 { font-size: 18px; }
+}
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="sidebar">
-    <h2>⌖ 轮回文本</h2>
-    <div class="stat"><span class="stat-label">体质</span><span class="stat-value" id="val-con">100</span></div>
-    <div class="stat-bar"><div class="stat-bar-fill" id="bar-con" style="width:100%;background:#4a9"></div></div>
-    <div class="stat"><span class="stat-label">理智</span><span class="stat-value" id="val-san">100</span></div>
-    <div class="stat-bar"><div class="stat-bar-fill" id="bar-san" style="width:100%;background:#69b"></div></div>
-    <div class="stat"><span class="stat-label">警惕</span><span class="stat-value" id="val-vig">50</span></div>
-    <div class="stat-bar"><div class="stat-bar-fill" id="bar-vig" style="width:50%;background:#a68b5b"></div></div>
-    <div class="divider"></div>
-    <div id="day-badge"></div>
-    <div style="font-size:12px;color:var(--text-dim)">道具</div>
-    <div class="inventory-list" id="inv-list">无</div>
-    <div class="rules-section">已知规则：<span id="rules-count">0</span>/5</div>
+<!-- ═══ SEO 着陆区（非 JS 环境可见）═══ -->
+<section class="seo-landing">
+  <article>
+    <h1>轮回文本：影之枢纽</h1>
+    <p>《轮回文本：影之枢纽》是一款黑暗风格的无限流文字冒险游戏。你将进入一个充满诡异规则的世界——每一面镜子都可能映出另一个维度的倒影，每一扇门后都可能藏着不为人知的秘密。</p>
+    <h2>核心玩法</h2>
+    <ul>
+      <li><strong>副本探索</strong>——进入不同的恐怖副本，如"诡异宿舍407"和"镜界回音"</li>
+      <li><strong>规则收集</strong>——每个副本都有隐藏的生存规则，通过线索逐步发现</li>
+      <li><strong>属性成长</strong>——体质、理智、警惕三项属性影响你的选择空间</li>
+      <li><strong>多结局</strong>——你的每一个选择都会影响故事的走向，解锁隐藏剧情</li>
+      <li><strong>RPG成长</strong>——通关获取经验值和金币，提升等级，解锁新副本</li>
+    </ul>
+    <h2>故事背景</h2>
+    <p>你在一个陌生的房间中醒来，手机屏幕上显示着冰冷的文字：「副本：诡异宿舍407」。你必须存活三天，找到离开的线索。但这座宿舍楼中隐藏着比死亡更可怕的东西——镜中的倒影、午夜的门铃、消失的女生林婉……</p>
+    <p>每个副本都是一次轮回。死亡不是终点——你会带着记忆重新开始。欢迎来到影之枢纽，愿你在轮回中找到属于自己的真实。</p>
+  </article>
+</section>
+
+<div id="game-container">
+  <!-- ═══ 枢纽大厅 ═══ -->
+  <div id="hub-view">
+    <header id="hub-header">
+      <h1>轮回文本：影之枢纽</h1>
+      <div id="hub-player-info">
+        <span id="hub-level">Lv.1</span>
+        <span id="hub-gold">💰 0</span>
+        <button id="hub-newgame-btn">新游戏</button>
+      </div>
+      <div id="hub-xp-section">
+        <div id="hub-xp-bar-outer"><div id="hub-xp-bar-inner" style="width:0%"></div></div>
+        <div id="hub-xp-text"><span id="hub-xp-current">0</span><span id="hub-xp-next">/ 100 XP</span></div>
+      </div>
+    </header>
+    <div id="hub-body">
+      <div id="hub-stats">
+        <h3>属性</h3>
+        <div class="hub-stat">
+          <div class="stat-row"><span class="label">体质</span><span class="value" id="hub-val-con">100/100</span></div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-con" style="width:100%;background:#4a9"></div></div>
+        </div>
+        <div class="hub-stat">
+          <div class="stat-row"><span class="label">理智</span><span class="value" id="hub-val-san">100/100</span></div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-san" style="width:100%;background:#69b"></div></div>
+        </div>
+        <div class="hub-stat">
+          <div class="stat-row"><span class="label">警惕</span><span class="value" id="hub-val-vig">50/50</span></div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-vig" style="width:50%;background:#a68b5b"></div></div>
+        </div>
+        <div class="hub-stat">
+          <div class="stat-row"><span class="label">已知规则</span><span class="value" id="hub-rules-count">0/5</span></div>
+        </div>
+      </div>
+      <div id="hub-dungeons"></div>
+    </div>
+    <div id="hub-inventory">
+      <h3>背包（<span id="hub-inv-count">0</span>/<span id="hub-inv-max">10</span>）</h3>
+      <div id="hub-inv-grid"></div>
+    </div>
   </div>
-  <div id="main">
-    <div id="text"></div>
-    <div id="choices"></div>
+
+  <!-- ═══ 副本视图 ═══ -->
+  <div id="dungeon-view">
+    <div id="sidebar">
+      <h2>⌖ 轮回文本</h2>
+      <div class="stat"><span class="stat-label">体质</span><span class="stat-value" id="val-con">100</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-con" style="width:100%;background:#4a9"></div></div>
+      <div class="stat"><span class="stat-label">理智</span><span class="stat-value" id="val-san">100</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-san" style="width:100%;background:#69b"></div></div>
+      <div class="stat"><span class="stat-label">警惕</span><span class="stat-value" id="val-vig">50</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="bar-vig" style="width:50%;background:#a68b5b"></div></div>
+      <div class="divider"></div>
+      <div id="day-badge"></div>
+      <div style="font-size:12px;color:var(--text-dim)">道具</div>
+      <div class="inventory-list" id="inv-list">无</div>
+      <div class="rules-section">已知规则：<span id="rules-count">0</span>/5</div>
+    </div>
+    <div id="main">
+      <div id="text"></div>
+      <div id="choices"></div>
+      <div id="return-hub-bar" style="display:none;"><button id="return-hub-btn">返回枢纽</button></div>
+    </div>
   </div>
 </div>
 
 <script>
+// ─── 道具数据库 ──────────────────────────
+const ITEM_DB = {
+  flashlight:   { id:'flashlight',   name:'flashlight',   type:'key_item', desc:'老式铁皮手电筒，电池还能亮。在黑暗中提供光明。',         rarity:'common', icon:'🔦' },
+  old_key:      { id:'old_key',      name:'old_key',   type:'key_item', desc:'标签上写着"11号"的旧钥匙，不知打开哪扇门。',            rarity:'uncommon', icon:'🗝️' },
+  mirror_shard: { id:'mirror_shard', name:'mirror_shard', type:'key_item', desc:'边缘锋利的镜片，触感异常冰凉，似乎不属于这面镜子。',       rarity:'rare', icon:'🪞' },
+  candle:       { id:'candle',       name:'半截蜡烛',  type:'key_item', desc:'闻起来有甜腻气味的半截蜡烛，小李床下找到的。',             rarity:'common', icon:'🕯️' },
+  diary_page:   { id:'diary_page',   name:'日记残页',  type:'key_item', desc:'林婉日记的残页，记录着她的恐惧和发现。',               rarity:'uncommon', icon:'📄' },
+};
+
+const ICON_FALLBACK = '📦';
+
+// ─── 副本数据库 ──────────────────────────
+const DUNGEON_DB = {
+  strange_dorm: {
+    id:'strange_dorm', name:'诡异宿舍 407', desc:'在镜子的另一边生存三天，收集规则，揭开林婉失踪的真相。',
+    minLevel:1, xpReward:100, goldReward:50, duration:'20-30分钟',
+  },
+  mirror_echo: {
+    id:'mirror_echo', name:'镜界回音', desc:'待开发——穿越镜面维度的心理惊悚之旅。',
+    minLevel:3, xpReward:200, goldReward:100, duration:'40-60分钟', locked:true,
+  },
+};
+
 // ─── 游戏状态 ──────────────────────────────
 const defaults = {
-  constitution: 100, sanity: 100, vigilance: 50,
-  day: 1,
-  inventory: [],
-  rulesKnown: 0,
-  causeOfDeath: '',
-  flag_heardRules: false,
-  flag_mirrorChecked: false,
-  flag_foundDiary: false,
-  flag_foundShard: false,
-  flag_sawWestWall: false,
-  flag_freedSpirit: false,
-  flag_answeredCall: false,
-  flag_bathroomSurvived: false,
+  // RPG 成长（跨副本持久化）
+  level:1, xp:0, xpToNext:100, gold:0,
+  maxInventorySlots:10, completedDungeons:[],
+  maxConstitution:100, maxSanity:100, maxVigilance:50,
+
+  // 当前副本状态（每次进副本重置）
+  constitution:100, sanity:100, vigilance:50,
+  day:1, inventory:[], rulesKnown:0, causeOfDeath:'',
+  currentDungeon:null,
+
+  // 事件标记
+  flag_heardRules:false, flag_mirrorChecked:false,
+  flag_foundDiary:false, flag_foundShard:false,
+  flag_sawWestWall:false, flag_freedSpirit:false,
+  flag_answeredCall:false, flag_bathroomSurvived:false,
 };
 
 let S = {};
@@ -272,18 +444,168 @@ function isDead() {
   return false;
 }
 
+// ─── RPG 函数 ────────────────────────────
+function xpForLevel(lv) { return Math.floor(100 * Math.pow(1.15, lv - 1)); }
+
+function addXP(amount) {
+  S.xp += amount;
+  while (S.xp >= S.xpToNext && S.level < 99) {
+    S.xp -= S.xpToNext; S.level++;
+    S.xpToNext = xpForLevel(S.level);
+    S.maxConstitution += 10; S.maxSanity += 10; S.maxVigilance += 5;
+    S.constitution = S.maxConstitution;
+    S.sanity = S.maxSanity;
+    S.vigilance = Math.floor(S.maxVigilance * 0.5);
+  }
+}
+
+function getItem(id) { return ITEM_DB[id] || { id, name:id, type:'key_item', desc:'', rarity:'common', icon:ICON_FALLBACK }; }
+function getInventoryItems() { return S.inventory.map(id => getItem(id)); }
+function hasItem(id) { return S.inventory.includes(id); }
+
+// ─── 存档系统 ────────────────────────────
+const SAVE_KEY = 'reincarnation_text_save';
+
+function saveGame() {
+  try { const d = {}; for (const k of Object.keys(defaults)) d[k] = S[k]; localStorage.setItem(SAVE_KEY, JSON.stringify(d)); } catch(e) {}
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
+    const data = JSON.parse(raw);
+    for (const k of Object.keys(defaults)) { if (k in data) S[k] = data[k]; else S[k] = defaults[k]; }
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch(e) {} }
+
+function resetDungeonState() {
+  S.day = 1; S.inventory = []; S.rulesKnown = 0; S.causeOfDeath = '';
+  S.constitution = S.maxConstitution; S.sanity = S.maxSanity; S.vigilance = Math.floor(S.maxVigilance * 0.5);
+  for (const k of Object.keys(defaults)) { if (k.startsWith('flag_')) S[k] = false; }
+}
+
 function apply(effects) {
   if (!effects) return;
   for (const [k, v] of Object.entries(effects)) {
-    if (k === 'inventory_add')       { S.inventory.push(v); }
+    if (k === 'inventory_add') {
+      if (S.inventory.length < S.maxInventorySlots) S.inventory.push(v);
+      else S.inventory.push(v); // 超出上限也加，显示时可截断
+    }
     else if (k === 'inventory_remove') { S.inventory = S.inventory.filter(x => x !== v); }
-    else if (k === 'flag')           { S[v] = true; }
+    else if (k === 'flag')             { S[v] = true; }
     else if (typeof S[k] === 'number') { S[k] += v; }
-    else                             { S[k] = v; }
+    else                               { S[k] = v; }
   }
-  S.constitution = clamp(S.constitution, 0, 100);
-  S.sanity       = clamp(S.sanity, 0, 100);
-  S.vigilance    = clamp(S.vigilance, 0, 100);
+  S.constitution = clamp(S.constitution, 0, S.maxConstitution || 100);
+  S.sanity       = clamp(S.sanity, 0, S.maxSanity || 100);
+  S.vigilance    = clamp(S.vigilance, 0, S.maxVigilance || 100);
+}
+
+// ─── 视图管理 ────────────────────────────
+function showView(view) {
+  const hub = document.getElementById('hub-view');
+  const dungeon = document.getElementById('dungeon-view');
+  hub.style.display = view === 'hub' ? 'block' : 'none';
+  dungeon.style.display = view === 'dungeon' ? 'flex' : 'none';
+}
+
+function renderHub() {
+  showView('hub');
+  document.getElementById('hub-level').textContent = `Lv.${S.level}`;
+  document.getElementById('hub-gold').textContent = `💰 ${S.gold}`;
+  const xpPct = S.xpToNext > 0 ? Math.min((S.xp / S.xpToNext) * 100, 100) : 100;
+  document.getElementById('hub-xp-bar-inner').style.width = xpPct + '%';
+  document.getElementById('hub-xp-current').textContent = S.xp;
+  document.getElementById('hub-xp-next').textContent = `/ ${S.xpToNext} XP`;
+
+  document.getElementById('hub-val-con').textContent = `${S.constitution}/${S.maxConstitution}`;
+  document.getElementById('hub-val-san').textContent = `${S.sanity}/${S.maxSanity}`;
+  document.getElementById('hub-val-vig').textContent = `${S.vigilance}/${S.maxVigilance}`;
+
+  const cp = (S.constitution / S.maxConstitution) * 100;
+  const sp = (S.sanity / S.maxSanity) * 100;
+  const vp = (S.vigilance / S.maxVigilance) * 100;
+
+  document.getElementById('hub-bar-con').style.width = cp + '%';
+  document.getElementById('hub-bar-con').style.background = S.constitution > 40 ? '#4a9' : S.constitution > 20 ? '#ca0' : '#c33';
+  document.getElementById('hub-bar-san').style.width = sp + '%';
+  document.getElementById('hub-bar-san').style.background = S.sanity > 40 ? '#69b' : S.sanity > 20 ? '#c90' : '#c33';
+  document.getElementById('hub-bar-vig').style.width = vp + '%';
+  document.getElementById('hub-rules-count').textContent = S.rulesKnown + '/5';
+
+  renderHubInventory();
+  renderHubDungeons();
+  saveGame();
+}
+
+function renderHubInventory() {
+  const grid = document.getElementById('hub-inv-grid');
+  grid.innerHTML = '';
+  document.getElementById('hub-inv-count').textContent = S.inventory.length;
+  document.getElementById('hub-inv-max').textContent = S.maxInventorySlots;
+  const items = getInventoryItems();
+  for (let i = 0; i < S.maxInventorySlots; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'hub-inv-slot';
+    if (i < items.length) {
+      const item = items[i];
+      slot.classList.add('filled', 'rarity-' + item.rarity);
+      const icon = document.createElement('div'); icon.className = 'item-icon'; icon.textContent = item.icon || ICON_FALLBACK;
+      const name = document.createElement('div'); name.className = 'item-name'; name.textContent = item.name;
+      slot.appendChild(icon); slot.appendChild(name);
+      slot.title = item.desc;
+    }
+    grid.appendChild(slot);
+  }
+}
+
+function renderHubDungeons() {
+  const container = document.getElementById('hub-dungeons');
+  container.innerHTML = '';
+  for (const [id, d] of Object.entries(DUNGEON_DB)) {
+    const card = document.createElement('div');
+    card.className = 'dungeon-card';
+    const completed = S.completedDungeons.includes(id);
+    const unlocked = !d.locked && S.level >= d.minLevel;
+    if (completed) card.classList.add('cleared');
+    const info = document.createElement('div'); info.className = 'info';
+    const name = document.createElement('div'); name.className = 'name'; name.textContent = d.name;
+    const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = d.desc + ' · ' + d.duration;
+    info.appendChild(name); info.appendChild(meta);
+    const status = document.createElement('div'); status.className = 'status';
+    if (completed) { status.textContent = '已通关'; status.classList.add('cleared'); }
+    else if (unlocked) { status.textContent = '可挑战'; status.classList.add('available'); }
+    else { status.textContent = `Lv.${d.minLevel} 解锁`; status.classList.add('locked'); }
+    const btn = document.createElement('button'); btn.className = 'enter-btn';
+    if (unlocked || completed) { btn.textContent = completed ? '再次挑战' : '进入副本'; btn.onclick = () => enterDungeon(id); }
+    else { btn.textContent = '未解锁'; btn.disabled = true; }
+    card.appendChild(info); card.appendChild(status); card.appendChild(btn);
+    container.appendChild(card);
+  }
+}
+
+function enterDungeon(dungeonId) {
+  S.currentDungeon = dungeonId;
+  resetDungeonState();
+  showView('dungeon');
+  document.getElementById('return-hub-bar').style.display = 'none';
+  document.getElementById('sidebar').querySelector('h2').textContent =
+    `⌖ ${DUNGEON_DB[dungeonId]?.name || '轮回文本'}`;
+  render('start');
+}
+
+function returnToHub() {
+  showView('hub');
+  renderHub();
+}
+
+function newGame() {
+  if (confirm('确定要开始新游戏吗？当前进度将被清除。')) {
+    clearSave(); resetState(); renderHub();
+  }
 }
 
 // ─── 副本内容 ──────────────────────────────
@@ -397,7 +719,7 @@ day1_dorm_search: {
 407 是一间标准的四人间，但目前只住了你和小李两张床。靠窗的两张铺位空着，床板上落了一层灰。
 
 你拉开书桌抽屉。`;
-    if (!S.inventory.includes('手电筒')) {
+    if (!S.inventory.includes('flashlight')) {
       t += ` 第二层抽屉里有一支<b>老式铁皮手电筒</b>。你试了一下——还能亮，电池是满的。`;
     }
     t += `
@@ -412,7 +734,7 @@ day1_dorm_search: {
     return t;
   },
   choices: [
-    { text: "拿上手电筒，上床睡觉", next: "day1_sleep", effect: { inventory_add: '手电筒', vigilance: 5 } },
+    { text: "拿上手电筒，上床睡觉", next: "day1_sleep", effect: { inventory_add: 'flashlight', vigilance: 5 } },
     { text: "不碰任何东西，直接睡觉", next: "day1_sleep" },
   ],
 },
@@ -436,7 +758,7 @@ day1_sleep: {
 <b>第二天。</b>
 
 阳光透过窗帘缝隙照进来的时候，你几乎以为昨晚只是一场噩梦。`;
-    if (S.inventory.includes('手电筒')) {
+    if (S.inventory.includes('flashlight')) {
       t += ` 枕边的手电筒提醒你——一切真实不虚。`;
     }
     t += `
@@ -574,7 +896,7 @@ day2_dorm_day: {
 但这让你更加不安，因为你知道天一黑，一切都会改变。
 
 你在小李的床铺下找到了一个鞋盒，里面装着一些零碎的东西：`;
-    if (!S.flag_foundDiary && !S.inventory.includes('旧钥匙')) {
+    if (!S.flag_foundDiary && !S.inventory.includes('old_key')) {
       t += `\n- 半截蜡烛（闻起来有一股说不出的甜腻味）\n- 一把<b>旧钥匙</b>，标签上写着"11号"——不是407的钥匙`;
     }
     t += `\n- 几张撕下来的笔记本纸，上面写着同样的字：<b>"别回头看"</b>，重复了不下五十遍。`;
@@ -590,8 +912,8 @@ day2_dorm_day: {
   },
   choices: (s) => {
     const c = [];
-    if (!S.inventory.includes('旧钥匙')) {
-      c.push({ text: "拿走旧钥匙，准备应对第二夜", next: "day2_night", effect: { inventory_add: '旧钥匙', vigilance: 5 }});
+    if (!S.inventory.includes('old_key')) {
+      c.push({ text: "拿走旧钥匙，准备应对第二夜", next: "day2_night", effect: { inventory_add: 'old_key', vigilance: 5 }});
     }
     c.push({ text: "躺在床上休整，等待黑夜降临", next: "day2_night" });
     return c;
@@ -607,7 +929,7 @@ day2_night: {
 你回到宿舍。小李还是没有回来。
 
 你一个人坐在下铺，背靠着冰冷的墙壁。手电筒放在触手可及的地方。`;
-    if (S.inventory.includes('手电筒')) t += ` 光柱照在天花板上，形成了一个小小的安全圈。`;
+    if (S.inventory.includes('flashlight')) t += ` 光柱照在天花板上，形成了一个小小的安全圈。`;
     t += `
 
 午夜十二点。
@@ -640,7 +962,7 @@ day2_night: {
   choices: [
     { text: "保持沉默，遵守规则二", next: "day2_ignore" },
     { text: "也许是小李真的回来了？去开门", next: "day2_answer" },
-    { text: "用手电筒照向门缝", next: "day2_peek", condition: s => s.inventory.includes('手电筒') },
+    { text: "用手电筒照向门缝", next: "day2_peek", condition: s => s.inventory.includes('flashlight') },
   ],
 },
 
@@ -711,7 +1033,7 @@ day2_ignore: {
   },
   choices: [
     { text: "立刻离开宿舍", next: "day3_morning", effect: { vigilance: 5 } },
-    { text: "用手电筒照向卫生间", next: "day2_bathroom", condition: s => s.inventory.includes('手电筒') },
+    { text: "用手电筒照向卫生间", next: "day2_bathroom", condition: s => s.inventory.includes('flashlight') },
     { text: "走过去，把门重新打开", next: "day2_bathroom" },
   ],
 },
@@ -756,7 +1078,7 @@ day2_bathroom: {
     S.flag_bathroomSurvived = true;
     S.sanity -= 10;
     let t = `你推向卫生间门。门无声地打开了。`;
-    if (S.inventory.includes('手电筒')) t += ` 手电筒的光柱扫进那片狭窄的空间。`;
+    if (S.inventory.includes('flashlight')) t += ` 手电筒的光柱扫进那片狭窄的空间。`;
     t += `
 
 卫生间里……一切正常。洗手台、花洒、蹲坑。没有任何异常。
@@ -795,7 +1117,7 @@ day2_bathroom: {
     return t;
   },
   choices: [
-    { text: "拿起镜子碎片，退出卫生间", next: "day3_morning", effect: { inventory_add: '镜子碎片', vigilance: 10, flag: 'flag_foundShard' } },
+    { text: "拿起镜子碎片，退出卫生间", next: "day3_morning", effect: { inventory_add: 'mirror_shard', vigilance: 10, flag: 'flag_foundShard' } },
     { text: "放下碎片，立刻退出卫生间", next: "day3_morning", effect: { vigilance: 5 } },
     { text: "把地上的镜子翻过来，看看背面是什么", next: "day2_mirror_flip" },
   ],
@@ -836,7 +1158,7 @@ day2_mirror_flip: {
   choices: (s) => {
     if (s.sanity <= 0 || s.constitution <= 0) return [];
     return [
-      { text: "抓起一块镜子碎片，逃出卫生间", next: "day3_morning", effect: { inventory_add: '镜子碎片' } },
+      { text: "抓起一块镜子碎片，逃出卫生间", next: "day3_morning", effect: { inventory_add: 'mirror_shard' } },
     ];
   },
 },
@@ -862,7 +1184,7 @@ day3_morning: {
       t += `\n\n你握着手里的镜子碎片。在阳光下，它看起来就是一块普通的碎玻璃。但你能感觉到它与众不同——冰凉的触感即使在正午也没有消退。`;
     }
 
-    if (S.inventory.includes('旧钥匙')) {
+    if (S.inventory.includes('old_key')) {
       t += `\n\n旧钥匙的标签上写着"11号"。这栋楼有11号房间吗？`;
     }
 
@@ -881,7 +1203,7 @@ day3_morning: {
   },
   choices: (s) => {
     const c = [];
-    if (S.inventory.includes('旧钥匙') || S.flag_foundDiary) {
+    if (S.inventory.includes('old_key') || S.flag_foundDiary) {
       c.push({ text: "去走廊尽头找11号房间", next: "day3_search_room11" });
     }
     c.push({ text: "重新检查407的墙壁——特别是西侧", next: "day3_west_wall" });
@@ -955,7 +1277,7 @@ day3_west_wall: {
 <b>『午夜十二点。西墙开门。钥匙在镜中。』</b>
 
 你后退一步。`;
-    if (S.inventory.includes('镜子碎片')) {
+    if (S.inventory.includes('mirror_shard')) {
       t += `\n\n你口袋里的镜子碎片开始发烫。`;
     }
     t += `
@@ -968,7 +1290,7 @@ day3_west_wall: {
     return t;
   },
   choices: [
-    { text: "等待午夜，穿越西墙", next: "day3_night_final", condition: s => s.inventory.includes('镜子碎片') },
+    { text: "等待午夜，穿越西墙", next: "day3_night_final", condition: s => s.inventory.includes('mirror_shard') },
     { text: "等待午夜，穿越西墙（没有碎片也要试）", next: "day3_night_final" },
   ],
 },
@@ -1007,7 +1329,7 @@ day3_night: {
 
 你把所有收集到的东西摆在面前。`;
     if (S.inventory.length > 0) {
-      t += `\n${S.inventory.map(x => `- ${x}`).join('\n')}`;
+      t += `\n${S.inventory.map(id => '- ' + (ITEM_DB[id]?.name || id)).join('\n')}`;
     } else {
       t += `\n你没有什么可依靠的——只有自己。`;
     }
@@ -1021,8 +1343,8 @@ day3_night: {
     return t;
   },
   choices: [
-    { text: "按照线索，在西墙等待开门", next: "day3_west_wall", condition: s => S.flag_foundDiary || S.inventory.includes('旧钥匙') },
-    { text: "用镜子碎片直面那个东西", next: "day3_night_final", condition: s => S.inventory.includes('镜子碎片') },
+    { text: "按照线索，在西墙等待开门", next: "day3_west_wall", condition: s => S.flag_foundDiary || S.inventory.includes('old_key') },
+    { text: "用镜子碎片直面那个东西", next: "day3_night_final", condition: s => S.inventory.includes('mirror_shard') },
     { text: "躲在被子里，什么也不做——熬到天亮", next: "day3_hide" },
   ],
 },
@@ -1034,7 +1356,7 @@ day3_night_final: {
 
 钟声响起。`;
 
-    if (S.inventory.includes('镜子碎片')) {
+    if (S.inventory.includes('mirror_shard')) {
       t += `
 西墙的镜子开始发光——不是反射的光线，而是镜子自己在发光。光线是冷的，银白色，像月光透过水面。
 
@@ -1100,7 +1422,7 @@ day3_night_final: {
     if (S.flag_freedSpirit) {
       return [{ text: "……", next: "hidden_end" }];
     }
-    if (S.inventory.includes('镜子碎片')) {
+    if (S.inventory.includes('mirror_shard')) {
       return [{ text: "走进通道", next: "good_end" }];
     }
     return [{ text: "跌入未知", next: "bad_end" }];
@@ -1185,7 +1507,14 @@ good_end: {
     return t;
   },
   choices: [
-    { text: "进入枢纽", next: "hub_teaser" },
+    { text: "返回枢纽", next: "__return_hub__",
+      effect(s) {
+        const totalXP = 100 + s.rulesKnown * 20 + 50;
+        addXP(totalXP); S.gold += 50;
+        if (!S.completedDungeons.includes('strange_dorm')) S.completedDungeons.push('strange_dorm');
+        saveGame();
+      }
+    },
   ],
 },
 
@@ -1223,7 +1552,14 @@ hidden_end: {
 <div class="hint">解锁：林婉（潜在队友）| 额外积分 +200 | 隐藏成就"镜中人"</div>`;
   },
   choices: [
-    { text: "和林婉一起走进枢纽", next: "hub_teaser" },
+    { text: "和林婉一起返回枢纽", next: "__return_hub__",
+      effect(s) {
+        const totalXP = 100 + s.rulesKnown * 20 + 50 + 200;
+        addXP(totalXP); S.gold += 100;
+        if (!S.completedDungeons.includes('strange_dorm')) S.completedDungeons.push('strange_dorm');
+        saveGame();
+      }
+    },
   ],
 },
 
@@ -1260,7 +1596,9 @@ bad_end: {
     t += `\n\n<i>—— 轮回不灭，再来一次 ——</i>`;
     return t;
   },
-  choices: [],
+  choices: [
+    { text: "返回枢纽", next: "__return_hub__", effect(s) { addXP(5); saveGame(); } },
+  ],
 },
 
 // ═══ 枢纽预告 ═══
@@ -1315,41 +1653,38 @@ function updateStats() {
   document.getElementById('val-con').textContent = S.constitution;
   document.getElementById('val-san').textContent = S.sanity;
   document.getElementById('val-vig').textContent = S.vigilance;
-  document.getElementById('bar-con').style.width = S.constitution + '%';
-  document.getElementById('bar-san').style.width = S.sanity + '%';
-  document.getElementById('bar-vig').style.width = S.vigilance + '%';
-  // 颜色变化
+  const mCon = S.maxConstitution || 100, mSan = S.maxSanity || 100, mVig = S.maxVigilance || 100;
+  document.getElementById('bar-con').style.width = (S.constitution / mCon * 100) + '%';
+  document.getElementById('bar-san').style.width = (S.sanity / mSan * 100) + '%';
+  document.getElementById('bar-vig').style.width = (S.vigilance / mVig * 100) + '%';
   const conBar = document.getElementById('bar-con');
   const sanBar = document.getElementById('bar-san');
   conBar.style.background = S.constitution > 40 ? '#4a9' : S.constitution > 20 ? '#ca0' : '#c33';
   sanBar.style.background = S.sanity > 40 ? '#69b' : S.sanity > 20 ? '#c90' : '#c33';
-  // 天数
   const dayBadge = document.getElementById('day-badge');
   dayBadge.innerHTML = S.day <= 3 ? `<span class="day-badge">第 ${S.day} 天</span>` : '';
-  // 道具
-  document.getElementById('inv-list').textContent = S.inventory.length ? S.inventory.join(' | ') : '无';
-  // 规则
+  document.getElementById('inv-list').textContent = getInventoryItems().map(i => i.name).join(' | ') || '无';
   document.getElementById('rules-count').textContent = S.rulesKnown;
 }
 
 function render(id) {
+  if (id === '__return_hub__') { returnToHub(); return; }
+  if (id === '__restart__') { restart(); return; }
+
   const p = passages[id];
   if (!p) { console.error('Passage not found:', id); return; }
 
   const textEl = document.getElementById('text');
   const choicesEl = document.getElementById('choices');
 
-  // 文本
   const raw = typeof p.text === 'function' ? p.text(S) : p.text;
   textEl.innerHTML = raw;
   textEl.className = S.sanity < 35 ? 'distorted' : '';
 
-  // 选项
   choicesEl.innerHTML = '';
   const choices = typeof p.choices === 'function' ? p.choices(S) : (p.choices || []);
 
   if (choices.length === 0 && id !== 'bad_end') {
-    // 判断是否为结局页
     const isEnding = id.includes('end') || id.includes('hub');
     if (isEnding) {
       const btn = document.createElement('button');
@@ -1365,28 +1700,20 @@ function render(id) {
     const btn = document.createElement('button');
     btn.textContent = typeof c.text === 'function' ? c.text(S) : c.text;
     btn.onclick = () => {
-      // 效果
       if (c.effect) {
-        if (typeof c.effect === 'function') {
-          c.effect(S);
-        } else {
-          apply(c.effect);
-        }
+        if (typeof c.effect === 'function') { c.effect(S); }
+        else { apply(c.effect); }
       }
-      S.constitution = clamp(S.constitution, 0, 100);
-      S.sanity       = clamp(S.sanity, 0, 100);
-      S.vigilance    = clamp(S.vigilance, 0, 100);
+      S.constitution = clamp(S.constitution, 0, S.maxConstitution || 100);
+      S.sanity       = clamp(S.sanity, 0, S.maxSanity || 100);
+      S.vigilance    = clamp(S.vigilance, 0, S.maxVigilance || 100);
 
-      if (isDead()) {
-        render('bad_end');
-      } else {
-        render(c.next);
-      }
+      if (isDead()) { render('bad_end'); }
+      else { render(c.next); }
     };
     choicesEl.appendChild(btn);
   });
 
-  // 死胡同——显示重新开始
   if (choicesEl.children.length === 0 && !document.getElementById('restart-btn')) {
     const btn = document.createElement('button');
     btn.id = 'restart-btn';
@@ -1394,6 +1721,9 @@ function render(id) {
     btn.onclick = restart;
     choicesEl.appendChild(btn);
   }
+
+  const isEnding = id.includes('end') || id === 'hub_teaser';
+  document.getElementById('return-hub-bar').style.display = isEnding ? 'block' : 'none';
 
   updateStats();
   document.getElementById('main').scrollTop = 0;
@@ -1403,11 +1733,19 @@ function render(id) {
 function restart() {
   resetState();
   document.getElementById('text').className = '';
-  render('start');
+  document.getElementById('return-hub-bar').style.display = 'none';
+  renderHub();
 }
 
-// 起跑
-restart();
+// ─── 启动 ────────────────────────────────
+function init() {
+  document.documentElement.classList.add('game-loaded');
+  document.getElementById('hub-newgame-btn').onclick = newGame;
+  document.getElementById('return-hub-btn').onclick = returnToHub;
+  if (loadGame()) { renderHub(); }
+  else { renderHub(); }
+}
+init();
 </script>
 </body>
 </html>
