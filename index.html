@@ -30,12 +30,17 @@
     --surface: #161616;
     --text: #c8c8c8;
     --text-dim: #777;
-    --accent: #8b0000;
-    --accent-bright: #c0392b;
+    --accent: #b71c1c;
+    --accent-bright: #e74c3c;
     --gold: #a68b5b;
     --border: #2a2a2a;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
+  :focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+  /* 文本大小模式 */
+  body.text-sm { font-size: 14px; }
+  body.text-md { font-size: 16px; }
+  body.text-lg { font-size: 19px; }
   body {
     background: var(--bg);
     color: var(--text);
@@ -148,6 +153,29 @@
     50%     { opacity:0.3; }
   }
   .flicker { animation: flicker 0.15s ease 2; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    10%,30%,50%,70%,90% { transform: translateX(-3px); }
+    20%,40%,60%,80% { transform: translateX(3px); }
+  }
+  .shake { animation: shake 0.4s ease; }
+  @keyframes slideIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(100px); opacity: 0; }
+  }
+  @keyframes glitch {
+    0% { clip-path: inset(0 0 85% 0); transform: translate(-2px, 1px); }
+    20% { clip-path: inset(20% 0 60% 0); transform: translate(2px, -1px); }
+    40% { clip-path: inset(60% 0 20% 0); transform: translate(-1px, 2px); }
+    60% { clip-path: inset(40% 0 40% 0); transform: translate(1px, -2px); }
+    80% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, -1px); }
+    100% { clip-path: inset(0 0 85% 0); transform: translate(0, 0); }
+  }
+  .glitch-text { animation: glitch 0.3s ease; }
   #choices {
     display: flex;
     flex-direction: column;
@@ -167,6 +195,8 @@
     transition: all 0.2s ease;
     font-family: inherit;
     line-height: 1.6;
+    min-height: 48px;
+    outline: none;
   }
   #choices button:hover {
     background: #1e1e1e;
@@ -176,6 +206,11 @@
   }
   #choices button:active {
     background: #222;
+  }
+  #choices button:focus-visible {
+    outline: 2px solid var(--accent-bright);
+    outline-offset: 2px;
+    border-color: var(--accent-bright);
   }
   .ending-title {
     font-size: 24px;
@@ -395,7 +430,9 @@
       <div id="hub-player-info">
         <span id="hub-level">Lv.1</span>
         <span id="hub-gold">💰 0</span>
+        <span id="hub-ach-count" style="color:var(--gold);font-size:12px;cursor:help" title="已解锁成就">🏆 0</span>
         <button id="hub-debug-btn" title="测评模式：满级+全角色+全道具+无限金币">🔧 测评</button>
+        <button id="hub-font-btn" title="切换文本大小" style="padding:8px 12px;background:transparent;color:var(--text-dim);border:1px solid #333;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px">Aa</button>
         <button id="hub-newgame-btn">新游戏</button>
       </div>
       <div id="hub-xp-section">
@@ -600,6 +637,8 @@ const defaults = {
   voidPulse:0, flag_voidAwakened:false, flag_voidAgony:false,
   flag_voidDeceit:false, flag_voidWatch:false, flag_voidTruth:0,
   flag_voidFusion:false,
+  // 成就追踪
+  achievements:[],
 };
 
 let S = {};
@@ -636,20 +675,79 @@ function hasItem(id) { return S.inventory.includes(id); }
 // ─── 存档系统 ────────────────────────────
 const SAVE_KEY = 'reincarnation_text_save';
 
+// ─── 成就系统 ────────────────────────────
+const ACHIEVEMENTS = {
+  dorm_survivor:    { id:'dorm_survivor',    name:'407幸存者',   desc:'首次通关诡异宿舍407', icon:'🏚️' },
+  dorm_hidden:      { id:'dorm_hidden',      name:'镜中人',       desc:'发现诡异宿舍隐藏结局，解救林婉', icon:'🪞' },
+  dorm_rules_master:{ id:'dorm_rules_master',name:'规则大师',     desc:'在一个周目内发现全部5条规则', icon:'📜' },
+  void_survivor:    { id:'void_survivor',    name:'虚渊行者',     desc:'首次通关虚渊归墟', icon:'🌌' },
+  void_true:        { id:'void_true',        name:'迷惘执弦者',   desc:'融合三元之力，成为迷惘的执弦者', icon:'💠' },
+  void_all_paths:   { id:'void_all_paths',   name:'三途归一',     desc:'在一个周目内走通殉道教、虚言宗、观天阁全部三条路线', icon:'🔀' },
+  void_truth:       { id:'void_truth',       name:'洞悉真相',     desc:'发现太一发疯的完整真相', icon:'👁️' },
+  gold_rich:        { id:'gold_rich',        name:'腰缠万贯',     desc:'积累1000金币', icon:'💰' },
+  level_master:     { id:'level_master',     name:'轮回常客',     desc:'达到10级', icon:'⬆️' },
+  char_collector:   { id:'char_collector',   name:'群英荟萃',     desc:'解锁4个角色', icon:'👥' },
+};
+
+function unlockAchievement(id) {
+  if (!S.achievements) S.achievements = [];
+  if (!S.achievements.includes(id)) {
+    S.achievements.push(id);
+    const ach = ACHIEVEMENTS[id];
+    if (ach) {
+      // 弹出成就提示
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:16px;right:16px;background:var(--surface);border:1px solid var(--gold);border-radius:6px;padding:12px 16px;z-index:9999;animation:slideIn 0.4s ease,slideOut 0.4s ease 2.5s forwards;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+      toast.innerHTML = `<div style="font-size:20px;margin-bottom:4px">${ach.icon}</div><div style="color:var(--gold);font-weight:bold;font-size:13px">🏆 成就解锁</div><div style="color:#fff;font-size:14px;margin-top:2px">${ach.name}</div><div style="color:var(--text-dim);font-size:11px;margin-top:2px">${ach.desc}</div>`;
+      document.body.appendChild(toast);
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
+      saveGame();
+    }
+  }
+}
+
+function checkAchievements() {
+  if (!S.achievements) S.achievements = [];
+  if (S.completedDungeons && S.completedDungeons.includes('strange_dorm')) unlockAchievement('dorm_survivor');
+  if (S.completedDungeons && S.completedDungeons.includes('void_abyss')) unlockAchievement('void_survivor');
+  if (S.level >= 10) unlockAchievement('level_master');
+  if (S.gold >= 1000) unlockAchievement('gold_rich');
+  if (S.unlockedCharacters && S.unlockedCharacters.length >= 4) unlockAchievement('char_collector');
+}
+
+const SAVE_VERSION = 2;
+
 function saveGame() {
-  try { const d = {}; for (const k of Object.keys(defaults)) d[k] = S[k]; localStorage.setItem(SAVE_KEY, JSON.stringify(d)); } catch(e) {}
+  try {
+    const d = { __v: SAVE_VERSION };
+    for (const k of Object.keys(defaults)) d[k] = S[k];
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+  } catch(e) { /* quota exceeded or private browsing — fail silently */ }
 }
 
 function loadGame() {
   try {
     const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
     const data = JSON.parse(raw);
+    const ver = data.__v || 0;
 
     // 迁移旧版道具：中文名 → ID
     if (data.inventory && Array.isArray(data.inventory)) {
       const nameToId = {};
       for (const [id, item] of Object.entries(ITEM_DB)) { nameToId[item.name] = id; }
       data.inventory = data.inventory.map(function(x) { return nameToId[x] || x; });
+    }
+
+    // v0→v1: 无版本号存档，添加新字段的默认值
+    if (ver < 1) {
+      if (!data.unlockedCharacters) data.unlockedCharacters = ['linwan'];
+      if (!data.currentCharacter) data.currentCharacter = 'linwan';
+      if (!data.completedDungeons) data.completedDungeons = [];
+    }
+    // v1→v2: 添加虚渊纪新增字段
+    if (ver < 2) {
+      if (data.maxSanity === undefined) data.maxSanity = 100;
+      if (data.maxVigilance === undefined) data.maxVigilance = 50;
     }
 
     for (const k of Object.keys(defaults)) { if (k in data) S[k] = data[k]; else S[k] = defaults[k]; }
@@ -745,6 +843,10 @@ function renderHub() {
   });
   document.getElementById('hub-level').textContent = `Lv.${S.level}`;
   document.getElementById('hub-gold').textContent = `💰 ${S.gold}`;
+  const achCount = (S.achievements || []).length;
+  const achTotal = Object.keys(ACHIEVEMENTS).length;
+  document.getElementById('hub-ach-count').textContent = `🏆 ${achCount}/${achTotal}`;
+  document.getElementById('hub-ach-count').title = (S.achievements || []).map(function(id){ var a = ACHIEVEMENTS[id]; return a ? a.icon + ' ' + a.name + ': ' + a.desc : ''; }).join('\n') || '尚未解锁成就';
   const xpPct = S.xpToNext > 0 ? Math.min((S.xp / S.xpToNext) * 100, 100) : 100;
   document.getElementById('hub-xp-bar-inner').style.width = xpPct + '%';
   document.getElementById('hub-xp-current').textContent = S.xp;
@@ -770,6 +872,7 @@ function renderHub() {
   renderCharShop();
   renderSaveSlots();
   showAutoSaveTime();
+  checkAchievements();
   saveGame();
 }
 
@@ -1874,6 +1977,8 @@ good_end: {
         const totalXP = 100 + s.rulesKnown * 20 + 50;
         addXP(totalXP); S.gold += 50;
         if (!S.completedDungeons.includes('strange_dorm')) S.completedDungeons.push('strange_dorm');
+        unlockAchievement('dorm_survivor');
+        if (s.rulesKnown >= 5) unlockAchievement('dorm_rules_master');
         saveGame();
       }
     },
@@ -1919,6 +2024,9 @@ hidden_end: {
         const totalXP = 100 + s.rulesKnown * 20 + 50 + 200;
         addXP(totalXP); S.gold += 100;
         if (!S.completedDungeons.includes('strange_dorm')) S.completedDungeons.push('strange_dorm');
+        unlockAchievement('dorm_survivor');
+        unlockAchievement('dorm_hidden');
+        if (s.rulesKnown >= 5) unlockAchievement('dorm_rules_master');
         saveGame();
       }
     },
@@ -2691,6 +2799,9 @@ void_end_good: {
         let totalGold = 200; if (s.flag_voidAgony) totalGold += 30; if (s.flag_voidDeceit) totalGold += 30; if (s.flag_voidWatch) totalGold += 30; if (s.flag_voidTruth >= 2) totalGold += 50;
         addXP(totalXP); S.gold += totalGold;
         if (!S.completedDungeons.includes('void_abyss')) S.completedDungeons.push('void_abyss');
+        unlockAchievement('void_survivor');
+        if (s.flag_voidAgony && s.flag_voidDeceit && s.flag_voidWatch) unlockAchievement('void_all_paths');
+        if (s.flag_voidTruth >= 2) unlockAchievement('void_truth');
         saveGame();
       }
     },
@@ -2741,6 +2852,10 @@ void_end_true: {
         addXP(totalXP); S.gold += 300;
         S.maxSanity += 20; S.sanity = S.maxSanity;
         if (!S.completedDungeons.includes('void_abyss')) S.completedDungeons.push('void_abyss');
+        unlockAchievement('void_survivor');
+        unlockAchievement('void_true');
+        if (s.flag_voidAgony && s.flag_voidDeceit && s.flag_voidWatch) unlockAchievement('void_all_paths');
+        if (s.flag_voidTruth >= 2) unlockAchievement('void_truth');
         saveGame();
       }
     },
@@ -2873,24 +2988,22 @@ function render(id) {
     }
   }
 
+  const keyLabels = '123456789';
+  let visibleIdx = 0;
   choices.forEach((c, i) => {
     if (c.condition && !c.condition(S)) return;
     const btn = document.createElement('button');
-    btn.textContent = typeof c.text === 'function' ? c.text(S) : c.text;
-    btn.onclick = () => {
-      if (c.effect) {
-        if (typeof c.effect === 'function') { c.effect(S); }
-        else { apply(c.effect); }
-      }
-      S.constitution = clamp(S.constitution, 0, S.maxConstitution || 100);
-      S.sanity       = clamp(S.sanity, 0, S.maxSanity || 100);
-      S.vigilance    = clamp(S.vigilance, 0, S.maxVigilance || 100);
-
-      if (isDead()) { render('bad_end'); }
-      else { render(c.next); }
-    };
+    const label = typeof c.text === 'function' ? c.text(S) : c.text;
+    const keyHint = visibleIdx < 9 ? `<span style="display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:3px;margin-right:8px;font-size:11px;color:var(--text-dim);font-family:monospace">${keyLabels[visibleIdx]}</span>` : '';
+    btn.innerHTML = keyHint + label;
+    btn.dataset.choiceKey = keyLabels[visibleIdx];
+    btn.onclick = () => executeChoice(c);
     choicesEl.appendChild(btn);
+    visibleIdx++;
   });
+
+  // Store choices for keyboard nav
+  window._currentChoices = choices.filter(c => !c.condition || c.condition(S));
 
   if (choicesEl.children.length === 0 && !document.getElementById('restart-btn')) {
     const btn = document.createElement('button');
@@ -2908,6 +3021,18 @@ function render(id) {
   window.scrollTo(0, 0);
 }
 
+function executeChoice(c) {
+  if (c.effect) {
+    if (typeof c.effect === 'function') { c.effect(S); }
+    else { apply(c.effect); }
+  }
+  S.constitution = clamp(S.constitution, 0, S.maxConstitution || 100);
+  S.sanity       = clamp(S.sanity, 0, S.maxSanity || 100);
+  S.vigilance    = clamp(S.vigilance, 0, S.maxVigilance || 100);
+  if (isDead()) { render('bad_end'); }
+  else { render(c.next); }
+}
+
 function restart() {
   resetState();
   document.getElementById('text').className = '';
@@ -2921,9 +3046,63 @@ function init() {
   document.getElementById('hub-debug-btn').onclick = window.debugMaxAll;
   document.getElementById('hub-newgame-btn').onclick = newGame;
   document.getElementById('return-hub-btn').onclick = returnToHub;
+
+  // 文本大小切换
+  const fontSizes = ['text-sm', 'text-md', 'text-lg'];
+  let fontSizeIdx = 1; // 默认 text-md
+  document.getElementById('hub-font-btn').onclick = function() {
+    fontSizeIdx = (fontSizeIdx + 1) % fontSizes.length;
+    document.body.classList.remove('text-sm', 'text-md', 'text-lg');
+    document.body.classList.add(fontSizes[fontSizeIdx]);
+    try { localStorage.setItem('reincarnation_text_fontSize', fontSizeIdx); } catch(e) {}
+  };
+  // 恢复上次文本大小
+  try {
+    const savedSize = parseInt(localStorage.getItem('reincarnation_text_fontSize'));
+    if (savedSize >= 0 && savedSize < fontSizes.length) {
+      fontSizeIdx = savedSize;
+      document.body.classList.remove('text-sm', 'text-md', 'text-lg');
+      document.body.classList.add(fontSizes[fontSizeIdx]);
+    }
+  } catch(e) {}
+
+  // 恐怖效果辅助
+  window.triggerShake = function() {
+    var main = document.getElementById('main');
+    main.classList.add('shake');
+    setTimeout(function() { main.classList.remove('shake'); }, 400);
+  };
+  window.triggerGlitch = function() {
+    var text = document.getElementById('text');
+    text.classList.add('glitch-text');
+    setTimeout(function() { text.classList.remove('glitch-text'); }, 300);
+  };
+
+  // 键盘快捷键：1-9 选择对应选项
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const key = e.key;
+    if (key >= '1' && key <= '9' && window._currentChoices) {
+      const idx = parseInt(key) - 1;
+      if (idx < window._currentChoices.length) {
+        e.preventDefault();
+        const choice = window._currentChoices[idx];
+        if (choice) executeChoice(choice);
+      }
+    }
+    // R = 重新开始 (仅结局画面)
+    if (key === 'r' || key === 'R') {
+      const restartBtn = document.getElementById('restart-btn');
+      if (restartBtn && restartBtn.style.display !== 'none') { e.preventDefault(); restart(); }
+    }
+  });
+
+  // beforeunload 自动保存
+  window.addEventListener('beforeunload', function() { saveGame(); });
+
   if (loadGame()) { renderHub(); }
   else { renderHub(); }
-  console.log('🎮 轮回文本 v2.1 已就绪 | debugMaxAll() 可测评 | 或点击 🔧 按钮');
+  console.log('🎮 轮回文本 v2.2 已就绪 | 键盘 1-9 选择 | debugMaxAll() 可测评 | 🔧 按钮满级');
 }
 init();
 </script>
