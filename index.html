@@ -285,8 +285,16 @@
 #hub-newgame-btn { padding: 8px 16px; background: transparent; color: var(--text-dim); border: 1px solid #333; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
 #hub-newgame-btn:hover { border-color: var(--accent-bright); color: var(--accent-bright); }
 
+/* ─── Hub Tabs ─── */
+#hub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+.hub-tab { padding: 10px 20px; background: transparent; color: var(--text-dim); border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all 0.2s; letter-spacing: 1px; }
+.hub-tab:hover { color: #fff; }
+.hub-tab.active { color: var(--accent-bright); border-bottom-color: var(--accent-bright); }
+.hub-tab-page { display: none; }
+.hub-tab-page.active { display: block; }
+
 /* ─── Character Shop ─── */
-#hub-char-section { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+#hub-char-section { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
 #hub-char-section h3 { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; letter-spacing: 2px; }
 #hub-char-active { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #1a1a1a; border: 1px solid var(--gold); border-radius: 6px; margin-bottom: 16px; }
 #hub-char-active .char-emoji { font-size: 36px; }
@@ -311,7 +319,7 @@
 .char-card .char-select-btn:hover { background: var(--gold); color: #000; }
 
 /* ─── Save Slots ─── */
-#hub-save-section { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+#hub-save-section { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
 #hub-save-section h3 { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; letter-spacing: 2px; }
 #hub-save-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
 .save-slot { background: #1a1a1a; border: 1px solid var(--border); border-radius: 6px; padding: 14px; text-align: center; }
@@ -387,44 +395,65 @@
         <div id="hub-xp-text"><span id="hub-xp-current">0</span><span id="hub-xp-next">/ 100 XP</span></div>
       </div>
     </header>
-    <div id="hub-body">
-      <div id="hub-stats">
-        <h3>属性</h3>
-        <div class="hub-stat">
-          <div class="stat-row"><span class="label">体质</span><span class="value" id="hub-val-con">100/100</span></div>
-          <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-con" style="width:100%;background:#4a9"></div></div>
+
+    <!-- Tab Bar -->
+    <nav id="hub-tabs">
+      <button class="hub-tab active" data-tab="overview">📋 总览</button>
+      <button class="hub-tab" data-tab="inventory">🎒 背包</button>
+      <button class="hub-tab" data-tab="characters">👤 角色</button>
+      <button class="hub-tab" data-tab="saves">💾 存档</button>
+    </nav>
+
+    <!-- ═══ Tab: 总览 ═══ -->
+    <div id="hub-tab-overview" class="hub-tab-page active">
+      <div id="hub-body">
+        <div id="hub-stats">
+          <h3>属性</h3>
+          <div class="hub-stat">
+            <div class="stat-row"><span class="label">体质</span><span class="value" id="hub-val-con">100/100</span></div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-con" style="width:100%;background:#4a9"></div></div>
+          </div>
+          <div class="hub-stat">
+            <div class="stat-row"><span class="label">理智</span><span class="value" id="hub-val-san">100/100</span></div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-san" style="width:100%;background:#69b"></div></div>
+          </div>
+          <div class="hub-stat">
+            <div class="stat-row"><span class="label">警惕</span><span class="value" id="hub-val-vig">50/50</span></div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-vig" style="width:50%;background:#a68b5b"></div></div>
+          </div>
+          <div class="hub-stat">
+            <div class="stat-row"><span class="label">已知规则</span><span class="value" id="hub-rules-count">0/5</span></div>
+          </div>
         </div>
-        <div class="hub-stat">
-          <div class="stat-row"><span class="label">理智</span><span class="value" id="hub-val-san">100/100</span></div>
-          <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-san" style="width:100%;background:#69b"></div></div>
-        </div>
-        <div class="hub-stat">
-          <div class="stat-row"><span class="label">警惕</span><span class="value" id="hub-val-vig">50/50</span></div>
-          <div class="stat-bar"><div class="stat-bar-fill" id="hub-bar-vig" style="width:50%;background:#a68b5b"></div></div>
-        </div>
-        <div class="hub-stat">
-          <div class="stat-row"><span class="label">已知规则</span><span class="value" id="hub-rules-count">0/5</span></div>
-        </div>
+        <div id="hub-dungeons"></div>
       </div>
-      <div id="hub-dungeons"></div>
-    </div>
-    <div id="hub-inventory">
-      <h3>背包（<span id="hub-inv-count">0</span>/<span id="hub-inv-max">10</span>）</h3>
-      <div id="hub-inv-grid"></div>
     </div>
 
-    <!-- 角色系统 -->
-    <div id="hub-char-section">
-      <h3>角色</h3>
-      <div id="hub-char-active"></div>
-      <div id="hub-char-grid"></div>
+    <!-- ═══ Tab: 背包 ═══ -->
+    <div id="hub-tab-inventory" class="hub-tab-page">
+      <div id="hub-inventory">
+        <h3>背包（<span id="hub-inv-count">0</span>/<span id="hub-inv-max">10</span>）</h3>
+        <div id="hub-inv-grid"></div>
+      </div>
     </div>
 
-    <!-- 存档槽位 -->
-    <div id="hub-save-section">
-      <h3>存档</h3>
-      <div id="hub-save-slots"></div>
-      <div id="hub-save-auto">自动保存：<span id="hub-save-time">--</span></div>
+    <!-- ═══ Tab: 角色 ═══ -->
+    <div id="hub-tab-characters" class="hub-tab-page">
+      <div id="hub-char-section">
+        <h3>当前角色</h3>
+        <div id="hub-char-active"></div>
+        <h3 style="margin-top:20px">角色商店</h3>
+        <div id="hub-char-grid"></div>
+      </div>
+    </div>
+
+    <!-- ═══ Tab: 存档 ═══ -->
+    <div id="hub-tab-saves" class="hub-tab-page">
+      <div id="hub-save-section">
+        <h3>手动存档</h3>
+        <div id="hub-save-slots"></div>
+        <div id="hub-save-auto">自动保存：<span id="hub-save-time">--</span></div>
+      </div>
     </div>
   </div>
 
@@ -660,8 +689,22 @@ function showView(view) {
   dungeon.style.display = view === 'dungeon' ? 'flex' : 'none';
 }
 
+function switchTab(tabName) {
+  document.querySelectorAll('.hub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.hub-tab-page').forEach(p => p.classList.remove('active'));
+  const tabBtn = document.querySelector(`.hub-tab[data-tab="${tabName}"]`);
+  const tabPage = document.getElementById('hub-tab-' + tabName);
+  if (tabBtn) tabBtn.classList.add('active');
+  if (tabPage) tabPage.classList.add('active');
+}
+
 function renderHub() {
   showView('hub');
+
+  // Wire tab buttons
+  document.querySelectorAll('.hub-tab').forEach(btn => {
+    btn.onclick = () => switchTab(btn.dataset.tab);
+  });
   document.getElementById('hub-level').textContent = `Lv.${S.level}`;
   document.getElementById('hub-gold').textContent = `💰 ${S.gold}`;
   const xpPct = S.xpToNext > 0 ? Math.min((S.xp / S.xpToNext) * 100, 100) : 100;
