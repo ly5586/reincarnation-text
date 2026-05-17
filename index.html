@@ -479,7 +479,8 @@
       <div id="day-badge"></div>
       <div style="font-size:12px;color:var(--text-dim)">道具</div>
       <div class="inventory-list" id="inv-list">无</div>
-      <div class="rules-section">已知规则：<span id="rules-count">0</span>/5</div>
+      <div class="rules-section"><span id="rules-label">已知规则</span>：<span id="rules-count">0</span>/<span id="rules-max">5</span></div>
+      <div class="rules-section" id="void-pulse-section" style="display:none;color:var(--accent-bright)">归墟脉动：<span id="void-pulse-val">0</span></div>
     </div>
     <div id="main">
       <div id="text"></div>
@@ -497,6 +498,12 @@ const ITEM_DB = {
   mirror_shard: { id:'mirror_shard', name:'mirror_shard', type:'key_item', desc:'边缘锋利的镜片，触感异常冰凉，似乎不属于这面镜子。',       rarity:'rare', icon:'🪞' },
   candle:       { id:'candle',       name:'半截蜡烛',  type:'key_item', desc:'闻起来有甜腻气味的半截蜡烛，小李床下找到的。',             rarity:'common', icon:'🕯️' },
   diary_page:   { id:'diary_page',   name:'日记残页',  type:'key_item', desc:'林婉日记的残页，记录着她的恐惧和发现。',               rarity:'uncommon', icon:'📄' },
+  // 虚渊纪道具
+  chaos_shard:   { id:'chaos_shard',  name:'混沌源质碎片', type:'key_item', desc:'一块散发着微光的晶体碎片，触感温热，仿佛在呼吸。法则之弦的未演化碎片，可化虚为真。', rarity:'epic', icon:'💠' },
+  agony_tome:    { id:'agony_tome',   name:'《万劫册》残卷', type:'key_item', desc:'殉道教的献祭经典残篇。纸上沾着暗褐色的痕迹——分不清是墨还是血。', rarity:'rare', icon:'📕' },
+  void_compass:  { id:'void_compass', name:'归墟罗盘', type:'key_item', desc:'观天阁铸造的青铜罗盘，不指南方，指向法则之弦最密集的方向。', rarity:'rare', icon:'🧭' },
+  truth_mask:    { id:'truth_mask',   name:'欺罔面具', type:'key_item', desc:'虚言宗的传承之物。戴上它说出的每一句话都像真话——因为连你自己都信了。', rarity:'rare', icon:'🎭' },
+  seal_talisman: { id:'seal_talisman', name:'封寂符', type:'key_item', desc:'以太初符文写就的符纸，据说能短暂封住寂灭天的投影。但符纸本身也在慢慢变黑。', rarity:'epic', icon:'🚫' },
 };
 
 const ICON_FALLBACK = '📦';
@@ -510,6 +517,10 @@ const DUNGEON_DB = {
   mirror_echo: {
     id:'mirror_echo', name:'镜界回音', desc:'待开发——穿越镜面维度的心理惊悚之旅。',
     minLevel:3, xpReward:200, goldReward:100, duration:'40-60分钟', locked:true,
+  },
+  void_abyss: {
+    id:'void_abyss', name:'虚渊归墟', desc:'太一疯了，寂灭天在靠近。法则之弦崩裂，执弦者互相厮杀。身为源质者——你的选择将决定虚渊的命运。',
+    minLevel:5, xpReward:350, goldReward:200, duration:'30-50分钟',
   },
 };
 
@@ -557,6 +568,13 @@ const CHARACTER_DB = {
     bonusDesc:'体质+8% 理智+8%',
     bonuses:{constitution:8, sanity:8},
   },
+  mitu: {
+    id:'mitu', name:'迷途', cost:1500,
+    tag:'源质觉醒', emoji:'🌫️',
+    desc:'他曾在镜子的另一边困了太久——久到镜子两侧的世界再也不能清晰地分开。他说每一个源质者都有一条看不见的弦连向归墟之巅。你问他怕不怕。他说："怕有用吗？迷惘本身，就是答案。"',
+    bonusDesc:'理智+10% 警惕+10%',
+    bonuses:{sanity:10, vigilance:10},
+  },
 };
 
 // ─── 游戏状态 ──────────────────────────────
@@ -578,6 +596,10 @@ const defaults = {
   flag_foundDiary:false, flag_foundShard:false,
   flag_sawWestWall:false, flag_freedSpirit:false,
   flag_answeredCall:false, flag_bathroomSurvived:false,
+  // 虚渊标记
+  voidPulse:0, flag_voidAwakened:false, flag_voidAgony:false,
+  flag_voidDeceit:false, flag_voidWatch:false, flag_voidTruth:0,
+  flag_voidFusion:false,
 };
 
 let S = {};
@@ -677,7 +699,7 @@ function resetDungeonState() {
   if (bonus.constitution) S.constitution = Math.floor(S.constitution * (1 + bonus.constitution / 100));
   if (bonus.sanity)       S.sanity       = Math.floor(S.sanity       * (1 + bonus.sanity / 100));
   if (bonus.vigilance)    S.vigilance    = Math.floor(S.vigilance    * (1 + bonus.vigilance / 100));
-  for (const k of Object.keys(defaults)) { if (k.startsWith('flag_')) S[k] = false; }
+  for (const k of Object.keys(defaults)) { if (k.startsWith('flag_')) S[k] = false; if (k.startsWith('voidPulse')) S[k] = 0; if (k.startsWith('flag_void')) S[k] = false; if (k.startsWith('flag_voidTruth')) S[k] = 0; }
 }
 
 function apply(effects) {
@@ -808,6 +830,8 @@ function enterDungeon(dungeonId) {
 }
 
 function returnToHub() {
+  // 清理虚渊脉动计时器
+  if (window._voidPulseTimer) { clearInterval(window._voidPulseTimer); window._voidPulseTimer = null; }
   showView('hub');
   renderHub();
 }
@@ -1983,6 +2007,781 @@ hub_teaser: {
   ],
 },
 
+// ═══════════════════════════════════════════════
+// ═══ 副本：虚渊归墟 ═══════════════════════════
+// ═══════════════════════════════════════════════
+
+// 开场：坠入虚渊
+void_start: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `你跨入那扇门——门后不是走廊，不是房间，而是一道<b>裂缝</b>。
+
+不是墙壁的裂缝，而是<b>世界本身的裂缝</b>。裂缝边缘发着幽蓝色的光，像是有人在现实上撕了一道口子。
+
+你跌了进去。
+
+坠落的感觉持续了很久——久到你开始怀疑自己是不是在坠落。没有风、没有声音、没有上下之分。
+
+然后——光亮。
+
+……
+
+你睁开眼。
+
+天空是灰紫色的，像一块永远褪不干净的淤青。脚下的地面是某种光滑的黑色石质——不是沥青、不是大理石，看起来像是凝固了的液态金属。远处有几棵枯树，树枝全都朝同一个方向倾斜，像是被一阵你看不到的风吹弯了。
+
+空气里有一股铁锈味，还有一种更微妙的、说不清楚的气味——像是晨雾，又像是葬礼上的花香。
+
+一个声音在你耳边响起。不是从外面传来的——<b>是直接在脑子里响起的</b>。
+
+<b>"你终于醒了……源质者。"</b>
+
+你转过身。
+
+一个瘦削的人影站在几步之外。他穿着一件深灰色的旧袍子，袍角沾了泥。脸很年轻——但眼睛不是。那双眼睛里有一种见过太多、已经不太在乎的神色。
+
+"我叫迷途。"他说，"你不认识我。但我认识你。每一个源质者——每一个拥有混沌源质碎片的人——终有一天会掉进这里。"
+
+他指了指这片灰紫色的天地。
+
+"欢迎来到虚渊。欢迎来到——<b>太一疯了之后的世界</b>。"`;
+
+    if (S.currentCharacter === 'mitu') {
+      t += `\n\n他看了你一眼。"哦……你用的是我的身份。有意思。说明在某个世界线里，我们是一个人。"`;
+    }
+
+    t += `\n\n手机屏幕——居然还有信号——弹出一行字：\n\n<b>【副本：虚渊归墟】</b>\n<b>主线任务：阻止寂灭天投影入侵。</b>\n<b>可选任务：发现太一发疯的真相（0/1）</b>\n\n归墟脉动：<b>${S.voidPulse}</b>`;
+    return t;
+  },
+  choices: [
+    { text: "警惕地看着他——这是什么地方？你怎么知道我的事？", next: "void_question" },
+    { text: "周围的世界不对劲——先观察一下这片灰紫色的环境", next: "void_observe" },
+    { text: "默不作声，跟着他走", next: "void_walk" },
+  ],
+},
+
+// 质问迷途
+void_question: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `"问得好。"迷途没有回避你的警惕，"如果你掉进来就什么都相信，那才不正常。"
+
+他在一块黑色岩石上坐下来。你注意到他坐下之前，石头的表面泛起了一圈细密的波纹——像水面，但瞬间又凝固了。
+
+"先说最简单的：这里是虚渊。不是地球、不是平行宇宙、不是梦境——它是<b>太一</b>的内部。太一是一个活的东西，大到包含了整个世界。你、我、所有生命、所有神明——都是太一的一部分，合起来就是太一。"
+
+"太一有条理地运行了很多年。几十条<b>法则之弦</b>在维持世界的秩序——消亡的弦、痛楚的弦、迷惘的弦、欺罔的弦……每条弦都有一个人格化身，叫做<b>执弦者</b>。执弦者们住在归墟之巅，操纵着凡间的天道。"
+
+"然后——大约相当于你们的年月往前推三千年——<b>太一疯了</b>。"`;
+
+    if (S.voidPulse > 3) {
+      t += `\n\n迷途说到这里，忽然抬起头，望向灰紫色的天空。你顺着他的目光看去——远处的天际线上，有一团隐隐的黑色在蠕动。`;
+
+      if (S.vigilance >= 50) {
+        t += `\n\n你的警惕足够高，能感觉到那团黑色散发出的……不是能量，不是温度，而是一种<b>心理上的压迫感</b>。像是不经意间闻到了死老鼠的味道——你知道那意味着什么，但你不想去确认。`;
+      }
+    }
+
+    t += `\n\n"疯的原因很简单——太一认知到了另一个和自己同量级的存在。那个存在叫<b>寂灭天</b>。寂灭天的全部天道只有一条——恐惧与绝望。"\n\n"太一内部的隐秘执弦者——专门掌管秘密的那位——第一个认知到了寂灭天。他立刻被吓疯了。然后他的疯狂传染了所有执弦者，最终太一也疯了。"\n\n"这就是虚渊的由来。"\n\n他停顿了一下。\n\n"而你——你是<b>源质者</b>。太一疯掉以后，法则碎片散落到凡人身上。你可以<b>化虚为真</b>——信假则成真，疑真则成幻。你是这个世界上为数不多能改写现实的人。"\n\n他站起来。\n\n"跟我来。我带你去看——法则崩塌是什么样子。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "跟他去看法则崩塌", next: "void_observe", effect: { vigilance: 5 } },
+    { text: "先等等——我需要消化一下你说的这些", next: "void_observe", effect: { sanity: 5 } },
+  ],
+},
+
+// 观察/行走在虚渊中
+void_walk: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `你默然跟着迷途走在灰紫色的天幕下。
+
+脚下每一步都踩出淡淡的涟漪。不是水——是这个世界对"外来者"的反应。迷途注意到了。"它在感知你。有意思——通常只有执弦者才会引起地面波动。"
+
+远处传来一声沉闷的轰响。你转过头——一道黑色的裂缝从天际一直延伸到地面，像有人在灰紫色的天幕上划了一刀。
+
+"又一条法则崩塌了。"迷途的神色沉了一下，"法则之弦——那些维持世界秩序的抽象概念——如果没有执弦者掌管，就会崩塌。刚才那条……是生长。今天植物可能不会再长了。"
+
+你低头看了一眼脚边——一株枯死的草正在缓缓化为灰烬。
+
+<b>规则崩塌是真实的。</b>`;
+
+    if (S.voidPulse > 4) {
+      t += `\n\n天空中的黑色蠕动物又多了一团。迷途看了一眼，脸色变了。"寂灭天的投影——它们聚拢的速度比平时快了很多。你身上……有什么东西在吸引它们。"`;
+    }
+
+    t += `\n\n"你说你是源质者。你有一个能力——<b>化虚为真</b>。"迷途停下来，指着一株正在化灰的枯草。"试试。相信它还活着——真心地、不假思索地相信。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "蹲下来，专注地看着那株枯草——它活着，它必须是活着的", next: "void_awaken", effect: { sanity: -5, vigilance: 10 } },
+    { text: "摇头——我不相信这种能力，这不科学", next: "void_observe", effect: { sanity: 5, vigilance: -5 } },
+  ],
+},
+
+// 觉醒源质能力
+void_awaken: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.rulesKnown = Math.max(S.rulesKnown, 2);
+    let t = `你蹲下来。
+
+手悬在枯草上方。它正在化为灰烬——末梢一点一点碎裂、飘散。
+
+<b>它还活着。</b>
+
+你在心里重复这句话。不是"希望它活着"，而是<b>"它活着"</b>。没有怀疑、没有犹豫。你把自己脑子里"这不可能"的声音掐死了。
+
+然后——灰烬停了。
+
+不是缓慢地停下来——是<b>定格</b>。正在碎裂的叶片悬在半空，像有人按下了暂停键。
+
+然后它开始往回长。
+
+灰烬重新聚拢、凝合、变绿。三秒钟之内——一株枯死在法则崩塌中的草，恢复了生机。
+
+你出了一身冷汗。不是因为害怕——是因为你<b>知道</b>了。这种能力不是魔法的幻觉，而是一种完全不同的认知方式。代价是：你越来越分不清什么是真、什么是假。
+
+迷途看着你，眼里闪过一丝复杂的光。"第一次都是这样。你会想——如果我能让一株草活过来，那我能不能让死去的法则也活过来？"
+
+"答案是：<b>暂时不能</b>。但这就是你在这里的原因。"
+
+归墟脉动：<b>${S.voidPulse}</b>`;
+    return t;
+  },
+  choices: [
+    { text: "站起身来——告诉我更多，我要知道真相", next: "void_observe", effect: { inventory_add: 'chaos_shard', flag: 'flag_voidAwakened' } },
+  ],
+},
+
+// 观察世界 / 了解大局
+void_observe: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.flag_voidTruth = (S.flag_voidTruth || 0) + 1;
+    let t = `迷途带你看了一圈虚渊。
+
+"我们现在在<b>五域</b>之一——大梁。整个虚渊世界有五条历史线在同时推进：大梁、大齐、现世、天陈国、还有一个被太初三圣藏起来的世界。五条线是竞争关系——此消彼长。你在大梁多活一天，大齐就少一份影响力。"
+
+"法则崩塌不是什么稀有事件。每天都有。问题是，寂灭天的投影开始出现在越来越多的裂缝里。它们是透明的淤泥——看久了你会疯。不看也是。"
+
+迷途停下来，指向前方。
+
+远处有一个巨型结构——一座悬浮在空中的塔。塔身洁白，但布满了黑色的裂纹。
+
+"<b>归墟之巅</b>的投影。"迷途说，"执弦者们的工作区。但从这里看过去——它烂了。说明执弦者们自己也出了问题。"
+
+他转向你。
+
+"你要做一个选择。虚渊里有很多势力，每一个都有自己对付寂灭天的方法。我不是来替你做决定的——但你需要知道，你需要选一边。"
+
+前方的大地上，三股力量正在汇聚——`;
+
+    if (S.voidPulse > 5) {
+      t += `\n\n<b>大地开始震动。</b>黑色的裂缝在你脚下蔓延，速度快于蛛网扩张。迷途猛地拉住你的袖子："寂灭天的投影来得比我想象的快——我们没时间了。选吧。"`;
+    }
+
+    t += `\n\n远处的烟尘里，你能看到三拨人马——每一拨人马都在用一种截然不同的方式对抗裂缝里渗出来的黑色淤泥。
+
+归墟脉动：<b>${S.voidPulse}</b>`;
+    return t;
+  },
+  choices: (s) => {
+    const c = [
+      { text: "走向那群满身血迹的苦行者——跟随殉道教", next: "void_path_agony" },
+      { text: "走向那群面带笑容的骗徒——跟随虚言宗", next: "void_path_deceit" },
+      { text: "走向那群手持罗盘的学者——跟随观天阁", next: "void_path_watch" },
+    ];
+    if (s.voidPulse >= 6) {
+      c.push({ text: "时间紧迫——我自己来，不跟任何人走", next: "void_convergence" });
+    }
+    return c;
+  },
+},
+
+// ═══ 路径一：殉道教 ═══
+void_path_agony: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.flag_voidAgony = true;
+    let t = `你走向那群血衣行者。
+
+他们的人数不多——十来个人——每一个人身上都带着伤。不是战斗留下的疤，而是整齐的、仪式化的伤口。一个老者跪在地上，用一柄小刀在自己的前臂上划下新的口子。血滴在地上，冒出了白烟。
+
+一个裹着暗红袍子的中年男人迎向你。他脸上有三道旧伤——从左额角一直延伸到下颌。
+
+"新来的源质者。"他的声音沙哑，但很稳，"迷途送来的？他总是能捡到好东西。"
+
+"我叫<b>靳九</b>。殉道教第六席长老。别被你的表情出卖了——你看到的这些伤口，不是受虐，是<b>交易</b>。"
+
+他伸出手臂——上面的伤口齐整如砧板上的刀痕。
+
+"你知道寂灭天靠什么入侵吗？<b>认知</b>。一旦你认知到它——意识到它的存在——它的恐惧就进了你脑子。然后它会顺着你的认知爬进这个世界。像寄生虫。你在裂缝边看到那些黑色淤泥了吗？那些都是被人<b>看到</b>了的寂灭天碎片。"
+
+"但痛楚——痛楚可以对抗恐惧。当你的身体痛到了极致，你的脑子就没空害怕了。痛楚是恐惧的锚。我们向<b>苦渊之主</b>——痛楚的执弦者——献祭痛楚，换取力量来封住裂缝。"
+
+他递给你一本残破的古书。书页上沾着暗褐色的痕迹。
+
+"《万劫册》——殉道教的核心经典。你可以选择——加入我们的<b>苦海渡舟</b>仪式，或者在一旁看着。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "接受仪式——承受痛楚，换取对抗寂灭天的力量", next: "void_agony_ritual" },
+    { text: "接过《万劫册》，但不参与仪式——先看看再说", next: "void_convergence", effect: { inventory_add: 'agony_tome', vigilance: 5 } },
+    { text: "拒绝——这种自残的方式太极端了", next: "void_convergence" },
+  ],
+},
+
+// 殉道教仪式
+void_agony_ritual: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.constitution -= 30;
+    S.vigilance += 20;
+    let t = `靳九把你带到山洞里的祭坛前。
+
+祭坛上供奉着一尊石像——不是什么慈眉善目的神明，而是一个蜷缩着身体、双手抱头的人形。它没有脸——脸上是一片光滑的空白。
+
+"苦渊之主。痛苦天道的人格化身。"靳九说，"你不需要求它。你只需要让它知道——你在承受。"
+
+他让你伸出左手。然后他的手一翻——一把骨刀出现在掌心。
+
+"只需要一下。但这一下——需要你不躲。"
+
+<b>你咬紧了牙。</b>
+
+骨刀切入掌心的一瞬间——不是一般的痛。是一种<b>超越肉体的痛楚</b>。像是同时感觉到了寒冷、灼烧、撕裂、窒息——千百种痛苦叠在一起，压缩成一个无限小的奇点。
+
+但你扛住了。
+
+在被痛楚淹没的黑暗中，你隐约看到了什么——一座巨大的黑色山脉，山脉中有一只眼睛——不，不是眼睛，而是一个<b>巨型的蠕动着的生命体</b>。它注意到了你。它满意了。
+
+你睁开眼睛。掌心的伤口在发着暗淡的红光。那不是愈合——那是痛楚在以你为锚，向外扩散。
+
+靳九把你拉起来。他脸上有一种接近虔诚的敬意。
+
+"苦渊之主接纳了你的献祭。从现在起——寂灭天的投影咬不动你了。恐惧会在你的痛楚面前退让。"`;
+
+    if (s.constitution <= 0) {
+      return t + `\n\n但仪式消耗了你太多体力。你的身体无法承受这种强度的痛苦……意识正在模糊……`;
+    }
+
+    t += `\n\n你摇晃着站稳。掌心的灼烧感在延续，但恐惧——你的恐惧——确实在退去。像是被痛楚稀释了。\n\n归墟脉动：<b>${S.voidPulse}</b>`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.constitution <= 0) return [{ text: "眼前一黑……", next: "void_end_bad" }];
+    return [
+      { text: "带着痛楚之印，前往归墟之门与其他势力汇合", next: "void_convergence", effect: { inventory_add: 'agony_tome' } },
+    ];
+  },
+},
+
+// ═══ 路径二：虚言宗 ═══
+void_path_deceit: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.flag_voidDeceit = true;
+    let t = `那群笑面人远比殉道教热情。
+
+"欢迎！欢迎！"一个脸上油彩画成鬼脸的女人冲你挥手，"新来的源质者？太——好——了——"
+
+她把"太"字拉得很长。她的脸每一秒钟都在变化——微笑、狂笑、冷笑、痴笑——但她的身体语言和她的表情完全对不上。你花了好几秒才意识到：<b>她不是在表演——但她每一个表情都是假的。</b>
+
+"我叫<b>花面</b>。"她做了个夸张的行礼动作，"虚言宗老三。麻将牌代号'二饼'——你应该不知道麻将是什么，没关系。"
+
+她忽然凑近，压低声音——但语气还是夸张得像在演舞台剧。
+
+"你知道寂灭天怎么找到你的吗？<b>认知</b>。你看见它，它就看见你。你信它存在，它就存在。所以我们——不——信。"
+
+"它是一团透明的淤泥。如果没人知道它是淤泥——它还是淤泥吗？如果全虚渊的人都以为它是一阵风——它不就是风了吗？"
+
+她得意地眨了一下左眼，"对"——又眨了一下右眼——"吗？"
+
+你意识到她在眨和你说话时相反的眼。你开始怀疑她说的每一个音节。
+
+她递给你一张面具。"欺罔面具——带上它，你说的谎话连执弦者都分不出真假。因为说谎的最高境界不是让别人信——是<b>连自己都信</b>。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "接过面具——学她的游戏", next: "void_deceit_game", effect: { sanity: -5 } },
+    { text: "接过面具，但不参与——直接去归墟之门", next: "void_convergence", effect: { inventory_add: 'truth_mask' } },
+  ],
+},
+
+// 虚言宗的骗局游戏
+void_deceit_game: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `花面把你带到一面镜子前——不是普通的镜子。镜面像水银，缓慢地流动。
+
+"这是<b>真伪之镜</b>。里面住着那面镜子里最真实的一个谎言。"她说这话的时候表情终于固定了——但她的嘴在笑，眼睛没有。
+
+"游戏规则很简单——你对着镜子说一句话。镜子会判断它是不是真话。如果它信了，你赢。如果它不信——镜子里的东西会出来找你。"
+
+"记住规则——<b>最高级的骗术，不是让别人信，是让你自己信。</b>"
+
+你站在镜子前。
+
+镜面里映出了你的脸——但它不是完全一样的。镜中的你比你微微老一点、疲惫一点。像是一个经历过太多、有点撑不住了的你。
+
+你看着镜中的自己。它看着你。
+
+你要说什么？`;
+
+    if (S.inventory.includes('truth_mask')) {
+      t += `\n\n你手里握着欺罔面具。花面说——戴上它以后说的谎没人能分辨。`;
+    }
+
+    return t;
+  },
+  choices: [
+    { text: "「我不害怕。」——盯着镜中自己的眼睛说", next: "void_deceit_result", effect: { sanity: -10 } },
+    { text: "「寂灭天不存在。」——用全部信念说服自己", next: "void_deceit_result", effect: s => { s.sanity -= 15; s.vigilance += 10; } },
+    { text: "「我是执弦者。」——尝试用源质者的化虚为真能力强行扭曲", next: "void_deceit_result", effect: s => { s.sanity -= 20; if (s.flag_voidAwakened) s.vigilance += 15; } },
+  ],
+},
+
+void_deceit_result: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `镜中的你静止了片刻。
+
+然后——它<b>信了</b>。
+
+镜面像水面一样波动。镜中的你嘴角勾起——然后镜面碎了。不是碎裂，而是融化——像冰从固态直接变成气态，跳过液态。
+
+花面在身后鼓起掌来。"通过了！第一次就骗过真伪之镜的源质者——百年一遇！"
+
+她的兴奋似乎是真的。但她是虚言宗——这就意味着它可能是假的，但你又不能确定。你不能确定，这就是虚言宗的厉害。
+
+她珍重地把欺罔面具放在你手里。"这面具认主了。戴上它之后说出的谎言——连执弦者都分辨不了。"
+
+她压低声音——这次是真的低，不是表演：<b>"到了归墟之门，用这个。寂灭天靠认知入侵——如果它认不出你，就碰不到你。"</b>`;
+
+    if (s.sanity <= 0) return t + `\n\n但骗过镜子消耗了你太多心智。你开始分不清自己在哪、在干什么——身边的一切都像是隔着一层水……`;
+
+    t += `\n\n归墟脉动：<b>${S.voidPulse}</b>`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0) return [{ text: "所有人都在笑……包括你自己……", next: "void_end_bad" }];
+    return [
+      { text: "收下面具，前往归墟之门", next: "void_convergence", effect: { inventory_add: 'truth_mask' } },
+    ];
+  },
+},
+
+// ═══ 路径三：观天阁 ═══
+void_path_watch: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.flag_voidWatch = true;
+    let t = `观天阁的人很安静。
+
+一个穿着青衫的中年人从人群中走出来。他戴着一副铜框眼镜，手里是一枚罗盘——但它的针不指向南，而是缓缓旋转，偶尔微微震颤。
+
+"<b>玄微</b>。观天阁三品监察员。"他看了一眼罗盘，"你的混沌源质指数——很高。迷途送你来的？他送的从来是上品。"
+
+他没有多客套。
+
+"你问我们怎么对付寂灭天？我们不'对付'它。"他顿了顿，"我们<b>研究</b>它。"
+
+你等着他解释。
+
+"寂灭天是一团纯粹的恐惧。它没有意识——至少没有人类理解得了的意识。它入侵不是出于仇恨，而是<b>路过</b>。就像风暴、就像瘟疫。你不需要对抗风暴——你只需要学会避风。"
+
+他拿出一本记录簿，翻开让你看：
+
+"我们已经记录了寂灭天投影的一百七十三次入侵事件。入侵的规律如下——当某一区域的法则崩塌次数超过临界值，投影就会出现。它被<b>混乱</b>吸引——就像鲨鱼闻到血。"
+
+"所以我们的逻辑不是堵住它，也不是骗过它，而是——<b>把虚渊修好</b>。法则少崩几条，寂灭天就不会来。"
+
+他合上记录簿。
+
+"但这需要时间。眼下，我需要你先帮忙做一件事——用你这个源质者的混沌源质，去稳固归墟之门的法则。你能<b>化虚为真</b>——那就让归墟之门'真'起来。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "跟他去观测裂缝——我想要更多的数据", next: "void_watch_study", effect: { vigilance: 10 } },
+    { text: "拿走罗盘和记录——直接去归墟之门", next: "void_convergence", effect: { inventory_add: 'void_compass', vigilance: 5 } },
+  ],
+},
+
+void_watch_study: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.vigilance += 15;
+    s.flag_voidTruth = (s.flag_voidTruth || 0) + 2;
+    let t = `玄微带你来到观测站——一座建在裂缝边缘的简易岗哨。
+
+通过一套由时序之链碎片驱动的观测镜，你看到了裂缝深处的画面。
+
+那里面——<b>不是虚空</b>。
+
+裂缝连接的是寂灭天本身。你看到的不是黑暗，而是一大片无边无际的透明物质——它蠕动、翻滚、偶尔凝聚成有形状的东西然后又立刻散开。它看起来像淤泥——但它是透明的。你可以看穿它，看到它的内部有无数扭曲的倒影。
+
+"它没有在看我们。"玄微说，"它在梦游。"
+
+观测镜放大了某一处——你看到了一个细节：寂灭天的透明淤泥内部，倒映着一个熟悉的结构。<b>那个结构，和你身边的虚渊世界一模一样。</b>
+
+"它不是入侵者。"玄微的声音很轻，"它在<b>镜像</b>。寂灭天在无意识中镜像了太一的一切——包括太一的恐惧。太一疯了，疯了以后开始恐惧——这些恐惧反过来强化了寂灭天。是一个<b>循环</b>。"
+
+你明白了——太一发疯不是寂灭天的错。是太一自己吓疯了自己。寂灭天只是一面恐惧的镜子。
+
+而迷惘——只有迷惘可以打破这个循环。
+
+玄微把罗盘交给你。指针在你手中微微颤抖。
+"你需要去归墟之门——<b>现在</b>。脉动已经超过临界值了。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "收起罗盘，立刻前往归墟之门", next: "void_convergence", effect: { inventory_add: 'void_compass' } },
+  ],
+},
+
+// ═══ 路径汇合：归墟之门 ═══
+void_convergence: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `归墟之门。
+
+它不是一扇门——是一个巨大的环形裂隙，悬浮在地平线上方。裂隙边缘燃烧着幽蓝色的火焰，中心是纯粹的黑暗。黑暗之中有东西在往外挤——一团透明的、凝胶状的物体，正缓慢地、不可阻挡地穿过裂隙。
+
+寂灭天的投影。正在成形。
+
+周围，三方势力已经展开了各自的应对——`;
+
+    if (S.flag_voidAgony) {
+      t += `\n\n殉道教的长老们在齐声诵经，用大量涌出的鲜血和白烟在裂隙外圈形成了一道封印。封印在缓慢但确实地收紧。`;
+    }
+    if (S.flag_voidDeceit) {
+      t += `\n\n花面带着几十个虚言宗成员在裂隙周围布下了一道幻象——在他们的集体信念下，裂隙看起来缩小了一圈。欺骗是有用的——寂灭天似乎真的在迟疑。`;
+    }
+    if (S.flag_voidWatch) {
+      t += `\n\n玄微在记录一切——他手里的罗盘疯狂地旋转。他的观测数据显示：裂隙的扩张速度在减缓。不是因为任何人的干预——是因为<b>它本身就在减速</b>。`;
+    }
+    if (!S.flag_voidAgony && !S.flag_voidDeceit && !S.flag_voidWatch) {
+      t += `\n\n没有人跟你一起。没有任何一方的力量支撑。你独自站在归墟之门前面。`;
+    }
+
+    t += `\n\n迷途出现在你身边。"三条路你都看到了。殉道教用痛楚当锚，虚言宗用欺罔当屏障，观天阁用理解找到规律——但都只能拖延，不能解决。"\n\n"因为根本问题是——太一疯了。大司命疯了。只要太一还在恐惧寂灭天，这个循环就不会结束。"`;
+
+    if (S.inventory.includes('agony_tome') && S.inventory.includes('truth_mask') && S.inventory.includes('void_compass') && S.inventory.includes('chaos_shard')) {
+      t += `\n\n他看了一眼你手里的东西。"痛楚的锚、欺罔的面具、观测的罗盘……再加上你的混沌源质碎片。你同时掌握了三种应对方式——和一个可以融合它们的力量。"\n\n"你是唯一能做到的人。用混沌源质把三者融合——创造一条新的法则之弦。<b>迷惘</b>。"\n\n"迷惘可以包裹太一。太一不再认知到寂灭天——寂灭天就不会再影响太一。不是战胜，是<b>假装看不见</b>。"`;
+    }
+
+    t += `\n\n归墟脉动：<b>${S.voidPulse}</b>——${S.voidPulse >= 7 ? '裂隙即将完全开启。' : '裂隙还在扩大。'}`;
+    return t;
+  },
+  choices: (s) => {
+    const c = [];
+    if (S.inventory.includes('agony_tome')) {
+      c.push({ text: "【殉道教方案】用痛苦之锚封住裂隙——把寂灭天投影推回去", next: "void_rift_agony" });
+    }
+    if (S.inventory.includes('truth_mask')) {
+      c.push({ text: "【虚言宗方案】戴上面具发动最高骗术——让寂灭天以为这里什么都没有", next: "void_rift_deceit" });
+    }
+    if (S.inventory.includes('void_compass')) {
+      c.push({ text: "【观天阁方案】利用规律找到裂隙的结构弱点，从内部瓦解它", next: "void_rift_watch" });
+    }
+    if (c.length === 3 && S.inventory.includes('chaos_shard') && S.flag_voidTruth >= 2) {
+      c.push({ text: "【隐藏路径】以混沌源质融合三元之力——创造迷惘之弦", next: "void_rift_fusion" });
+    }
+    if (c.length === 0) c.push({ text: "两手空空——只能直面寂灭天的投影", next: "void_rift_naked" });
+    return c;
+  },
+},
+
+// 各路径最终场景
+void_rift_agony: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.constitution -= 20;
+    let t = `你走到殉道教阵中。靳九看了你一眼，点头，让出一条路。
+
+你站到封印环的边缘。<b>万劫册</b>的力量从掌心涌出——痛楚化为有形的红色锁链，一道道缠上寂灭天的投影。
+
+投影发出了一声你没有听到、但骨头全在共振的嗡鸣。
+
+它退了一步。
+
+不是真的"退"——而是体积缩减了一点。然后又缩了一点。你的掌心灼烧起来——每一次灼烧都从投影上撕下一块透明淤泥。
+
+<b>痛楚是恐惧的反义词。</b>
+
+五分钟后——投影被推出了裂隙。裂隙边缘的蓝焰闪烁了一下，然后缩小了一半。
+
+不是永久的封印。但够用了——够用几十年。
+
+你瘫坐在地上，掌心仍然在燃烧。"
+
+归墟脉动：<b>${S.voidPulse}</b>`;
+    if (s.constitution <= 0) return t + `\n\n但你的体力已经到了极限。你为这道封印付出的代价……是全部。`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.constitution <= 0) return [{ text: "……", next: "void_end_bad" }];
+    return [{ text: "裂隙缩小了——这就够了", next: "void_end_good" }];
+  },
+},
+
+void_rift_deceit: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.sanity -= 15;
+    let t = `你戴上面具。
+
+花面在你身后低语："记住——<b>连你自己都骗</b>。不只是骗寂灭天这里没有人——要骗它这里<b>从来没有人</b>。这个世界是空的、寂静的、没有生命值得它光顾。"
+
+你看着裂隙中涌出的透明淤泥，把它想象成一阵无害的山雾。你告诉自己：这里什么都没有。从来没有人。没有生命、没有太一、没有执弦者——只有一片无人的虚空。
+
+面具下的你在微笑。因为你真的信了。
+
+<b>寂灭天的投影停住了。</b>
+
+它悬在裂隙边缘——透明淤泥不再往前涌动，而是茫然地盘旋。它在寻找——但它找不到任何可以抓住的认知锚点。
+
+然后它回转。慢慢地、笨拙地——它回到了裂隙里。
+
+花面的笑声在身后响起——"哈！我就说嘛——最高级的防御不是墙，是<b>假装</b>！"`;
+
+    if (s.sanity <= 0) return t + `\n\n但你摘不下面具了。你分不清自己是输了还是赢了……`;
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0) return [{ text: "面具下的笑容——撕不下来了……", next: "void_end_bad" }];
+    return [{ text: "摘下面具——它走了", next: "void_end_good" }];
+  },
+},
+
+void_rift_watch: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    let t = `你拿起罗盘。指针疯狂地旋转了三圈——然后停在一个方向。不是裂隙的中心，而是裂隙的右下角——一块不起眼的黑色区域。
+
+"找到了。"玄微的声音在你身后响起，"那就是结构弱点。"
+
+你用混沌源质加固罗盘的指向——然后开始<b>化虚为真</b>。让你的信念顺着罗盘的指向注入裂隙——你相信那里有一个锚点，能够固定住裂隙。
+
+锚点真的出现了。
+
+裂隙的边缘开始凝固——不是萎缩，而是<b>变得实体化</b>。透明淤泥变成了一种无害的灰色石头。寂灭天的投影被冻在裂隙的边缘——还在动，但已经无法出来了。
+
+"理解比对抗更有效。"玄微说，"你不需要战胜它——你只需要<b>理解它</b>。"`;
+
+    return t;
+  },
+  choices: [
+    { text: "裂隙被封住了——用观测和理解换来的", next: "void_end_good" },
+  ],
+},
+
+// 隐藏路径：融三元创迷惘
+void_rift_fusion: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.flag_voidFusion = true;
+    let t = `你同时拿起了三样东西。
+
+左手——《万劫册》上的痛楚在掌心灼烧。右手——欺罔面具上的幻象在眼前闪烁。胸前——归墟罗盘的指针指向混沌核心。额头——混沌源质的碎片在发烫。
+
+同时<b>化虚为真</b>。
+
+你闭上眼睛。三条互相矛盾的力量在你的混沌源质里激烈地冲撞——痛楚想让你退缩，欺罔想让你忘记，理解想让你冷静。
+
+<b>然后——你想到了迷惘。</b>
+
+不是恐惧、不是痛楚、不是欺骗、不是理解——是<b>不知道</b>。不知道寂灭天是什么、不知道它存不存在、不知道它在不在那里。完全的、彻底的、没有答案的迷惘。
+
+当你睁开眼的时候——一条全新的法则之弦在你手中成形了。
+
+是一团半透明的雾气——没有颜色，没有形状，没有定义。你把它推了出去——雾气缓缓扩散，包裹住了归墟之门，包裹住了寂灭天的投影，包裹住了远处的归墟之巅。
+
+然后——寂灭天的投影<b>看不见了</b>。
+
+不是消失了，不是被封印了——而是被迷惘包裹之后，<b>太一无法认知到它了</b>。恐惧凭空消失——不是因为寂灭天走了，而是因为太一不知道自己应该害怕什么。
+
+裂隙缓缓收拢。
+
+迷途站在你身边。他的声音很轻，带着一种说不清的情绪：
+
+"轮回主宰，无始亦无终……恭喜。你把大司命从恐惧里解救了——<b>用假装看不见的方式</b>。"
+
+你手中那团雾化的迷惘法则——正在凝聚成形。你感觉到了一种前所未有的连接——归墟之巅在召唤你。
+
+<b>你正在变成执弦者。</b>`;
+
+    return t;
+  },
+  choices: [
+    { text: "接受召唤——成为迷惘的执弦者", next: "void_end_true" },
+    { text: "放开迷惘之弦——我不想成为神", next: "void_end_good" },
+  ],
+},
+
+// 直面寂灭天（无道具）
+void_rift_naked: {
+  text: s => {
+    S.voidPulse = (S.voidPulse || 0) + 1;
+    S.sanity -= 40;
+    S.constitution -= 40;
+    let t = `你两手空空地走向裂隙。
+
+透明淤泥涌了出来。你直视它——然后立刻后悔了。因为你看到了它内部的东西——那里面有无数扭曲的倒影，包括你自己的脸。每一张脸都在尖叫——但是尖叫不出来，因为淤泥的密度太大，声音传不出。
+
+你终于理解了为什么太一疯了。看到这东西——没有人能保持理智。
+
+你的意识被恐惧淹没了——不是某个具体事物的恐惧，而是纯粹的、没有任何理由的、天地之间最原始的恐惧。`;
+
+    if (s.sanity <= 0 || s.constitution <= 0) {
+      return t + `\n\n你撑不住了。恐惧太大了——大过你的整个灵魂。`;
+    }
+    return t;
+  },
+  choices: (s) => {
+    if (s.sanity <= 0 || s.constitution <= 0) return [{ text: "被恐惧吞没……", next: "void_end_bad" }];
+    return [{ text: "勉强从淤泥中挣脱——但这只是暂时的", next: "void_end_good" }];
+  },
+},
+
+// ═══ 好结局 ═══
+void_end_good: {
+  text: s => {
+    S.day = 3;
+    let baseXP = 350; let bonusXP = 0; let goldBonus = 0;
+    if (S.flag_voidAgony) { bonusXP += 50; goldBonus += 30; }
+    if (S.flag_voidDeceit) { bonusXP += 50; goldBonus += 30; }
+    if (S.flag_voidWatch) { bonusXP += 50; goldBonus += 30; }
+    if (S.flag_voidTruth >= 2) { bonusXP += 100; goldBonus += 50; }
+
+    let t = `<div class="ending-title good">⌖ 裂隙暂封 ⌖</div>
+
+裂隙缩小了——但它还在。你知道它终究会再次扩张。
+
+这个世界——由太一构成的疯狂轮回——暂时获得了喘息之机。你用一种方式延缓了危机。<b>但你没有从根本上解决问题。</b>
+
+迷途站在不远处。他往裂隙里看了一眼。"不够彻底——但已经比大多数人做得好了。"
+
+<b>结算：</b>
+- 基础通关积分：350
+- 路径完成加成：+${bonusXP}
+- 金币奖励：${200 + goldBonus}`;
+
+    if (!S.flag_voidFusion) {
+      t += `\n\n<div class="hint">提示：有些秘密你还没有发现。同时走通三条路径，并且发现太一疯了的真相，会开启隐藏结局。</div>`;
+    }
+
+    t += `\n\n你最后看了一眼灰紫色的天空。虚渊还在——太一还在疯。但至少今天，寂灭天没有赢。\n\n<b>总有一天，你会找到一劳永逸的方法。</b>`;
+    return t;
+  },
+  choices: [
+    { text: "返回枢纽", next: "__return_hub__",
+      effect(s) {
+        let totalXP = 350; if (s.flag_voidAgony) totalXP += 50; if (s.flag_voidDeceit) totalXP += 50; if (s.flag_voidWatch) totalXP += 50; if (s.flag_voidTruth >= 2) totalXP += 100;
+        let totalGold = 200; if (s.flag_voidAgony) totalGold += 30; if (s.flag_voidDeceit) totalGold += 30; if (s.flag_voidWatch) totalGold += 30; if (s.flag_voidTruth >= 2) totalGold += 50;
+        addXP(totalXP); S.gold += totalGold;
+        if (!S.completedDungeons.includes('void_abyss')) S.completedDungeons.push('void_abyss');
+        saveGame();
+      }
+    },
+  ],
+},
+
+// ═══ 真结局（隐藏）═══
+void_end_true: {
+  text: s => {
+    return `<div class="ending-title true">⌖ 真结局：迷惘执弦者 ⌖</div>
+
+你握住了那条尚未命名的法则之弦。
+
+归墟之巅在召唤你——不是声音，不是光，而是一种跨越空间的<b>引力</b>。像是你本来就是从那里掉下来的，现在终于要回去了。
+
+迷途站在你身后。他没有说话——但他的身影在雾中显得很淡，像是快被风吹散的影子。
+
+"你早就是迷惘的一部分了，"他的声音飘过来，"从你第一次问'这是真的还是假的'开始。"
+
+你回过头。
+
+他的身影已经完全透明了——然后消散。不是消失了，而是<b>和你融为一体</b>。迷途从来就不存在——他是你身上分离出去的那一部分：属于迷惘的那一部分。
+
+<b>现在你们合二为一了。</b>
+
+归墟之巅的白门轰然打开。你看到了门后——数十位执弦者站在各自的法则之弦上，静静地望着你。太初三圣之一——掌管秘密的执弦者——向你微微颔首。
+
+在你身侧，寂灭天的投影依然在远处蠕动。但它退得越来越远——因为太一被你包裹在迷惘之中，已经感知不到它了。
+
+<b>"轮回主宰，无始亦无终。"</b>
+
+这是你接任迷惘司命时，归墟之巅为你刻下的新法则之名。
+
+<b>你不是神。你是一个选择了'假装看不见'的人。</b>
+但这正是世界上最强大的防御。
+
+——虚渊归墟·真结局——
+
+<div class="hint">
+隐藏结局条件：同时持有三种路径道具+混沌源质碎片+发现太一发疯的真相
+解锁成就：迷惘的执弦者 | 永久加成：理智上限 +20
+</div>`;
+  },
+  choices: [
+    { text: "返回枢纽——以执弦者的身份", next: "__return_hub__",
+      effect(s) {
+        const totalXP = 350 + 150 + 50 + 50 + 100 + 200;
+        addXP(totalXP); S.gold += 300;
+        S.maxSanity += 20; S.sanity = S.maxSanity;
+        if (!S.completedDungeons.includes('void_abyss')) S.completedDungeons.push('void_abyss');
+        saveGame();
+      }
+    },
+  ],
+},
+
+// ═══ 坏结局 ═══
+void_end_bad: {
+  text: s => {
+    let t = `<div class="ending-title">⌖ 被恐惧吞没 ⌖</div>
+
+<div class="death-recap">
+<b>归墟脉动：</b>${S.voidPulse}
+<span>寂灭天投影——完全成形。</span>
+</div>
+
+太一在疯狂中尖叫了一声。
+
+那声音不是在空气里传播的——是在<b>你的骨头里</b>。你感觉到了整个世界的痉挛——这一瞬间，五种颜色同时变成了六种，然后全变成了灰色。
+
+寂灭天的透明淤泥淹没了你。
+
+那不是疼痛——因为没有身体反应。是<b>纯粹的恐惧</b>——没有理由的、没有对象的、像是出生那一刻第一次接触到外面世界的寒冷。
+
+但在意识彻底消失之前——你听到了迷途的声音。很轻，很远。
+
+"……不要紧。下一个循环，你会记得多一点。"`;
+
+    if (!S.flag_voidAgony && !S.flag_voidDeceit && !S.flag_voidWatch) {
+      t += `\n\n<div class="hint">提示：你不认识这个世界。在做出选择之前，至少探索一条路径——殉道教、虚言宗、观天阁，每一个都有应对寂灭天的方法。</div>`;
+    } else if (S.voidPulse >= 8) {
+      t += `\n\n<div class="hint">提示：归墟脉动太高。寂灭天的投影在你犹豫的时候越来越强。下次行动更快一些。</div>`;
+    }
+
+    t += `\n\n<i>—— 轮回不灭，再来一次 ——</i>`;
+    return t;
+  },
+  choices: [
+    { text: "返回枢纽", next: "__return_hub__", effect(s) { addXP(10); saveGame(); } },
+  ],
+},
+
 }; // 副本内容结束
 
 // ═══ 引擎 ═══
@@ -2001,7 +2800,48 @@ function updateStats() {
   const dayBadge = document.getElementById('day-badge');
   dayBadge.innerHTML = S.day <= 3 ? `<span class="day-badge">第 ${S.day} 天</span>` : '';
   document.getElementById('inv-list').textContent = getInventoryItems().map(i => i.name).join(' | ') || '无';
-  document.getElementById('rules-count').textContent = S.rulesKnown;
+  // 根据副本更新规则标签
+  if (S.currentDungeon === 'void_abyss') {
+    document.getElementById('rules-label').textContent = '法则真相';
+    document.getElementById('rules-max').textContent = '3';
+    document.getElementById('rules-count').textContent = (S.flag_voidTruth || 0);
+  } else {
+    document.getElementById('rules-label').textContent = '已知规则';
+    document.getElementById('rules-max').textContent = '5';
+    document.getElementById('rules-count').textContent = S.rulesKnown;
+  }
+  // 虚渊脉动显示
+  const vpSec = document.getElementById('void-pulse-section');
+  const vpVal = document.getElementById('void-pulse-val');
+  if (S.currentDungeon === 'void_abyss') {
+    vpSec.style.display = 'block';
+    vpVal.textContent = S.voidPulse || 0;
+    if (S.voidPulse >= 8) vpVal.style.color = '#c33';
+    else if (S.voidPulse >= 5) vpVal.style.color = '#ca0';
+    else vpVal.style.color = 'var(--accent-bright)';
+  } else {
+    vpSec.style.display = 'none';
+  }
+  // 实时脉动：虚渊副本中，每15秒自动增加1点脉动
+  if (S.currentDungeon === 'void_abyss' && !window._voidPulseTimer) {
+    window._voidPulseTimer = setInterval(function() {
+      if (S.currentDungeon === 'void_abyss' && S.day <= 3 && !document.getElementById('text').innerHTML.includes('结局')) {
+        S.voidPulse = (S.voidPulse || 0) + 1;
+        vpVal.textContent = S.voidPulse;
+        if (S.voidPulse >= 8) vpVal.style.color = '#c33';
+        else if (S.voidPulse >= 5) vpVal.style.color = '#ca0';
+        // 脉动过高时在文字区显示警告
+        if (S.voidPulse >= 10) {
+          const textEl = document.getElementById('text');
+          const warn = '<div style="color:#c33;margin-top:12px;animation:flicker 0.5s ease 3">⚠ 归墟脉动已达临界——寂灭天投影即将完全成形</div>';
+          if (!textEl.innerHTML.includes('归墟脉动已达临界')) textEl.innerHTML += warn;
+        }
+      } else { clearInterval(window._voidPulseTimer); window._voidPulseTimer = null; }
+    }, 15000);
+  }
+  if (S.currentDungeon !== 'void_abyss' && window._voidPulseTimer) {
+    clearInterval(window._voidPulseTimer); window._voidPulseTimer = null;
+  }
 }
 
 function render(id) {
